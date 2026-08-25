@@ -81,27 +81,16 @@ test('clicking a mode writes only { mode } and never clobbers themes', async ({ 
   expect(stored.settings.themes.light.background).toBe('#f5efe0');
 });
 
-test('gear button opens the options page', async ({ extPage }) => {
+test('gear button opens the options page', async ({ context, extPage }) => {
   const page = await extPage('popup/popup.html');
-  await page.evaluate(() => {
-    window.__opened = 0;
-    try {
-      chrome.runtime.openOptionsPage = () => {
-        window.__opened++;
-      };
-    } catch {
-      Object.defineProperty(chrome.runtime, 'openOptionsPage', {
-        value: () => {
-          window.__opened++;
-        },
-        configurable: true,
-      });
-    }
-  });
 
-  await page.locator('#open-options').click();
+  const [optionsPage] = await Promise.all([
+    context.waitForEvent('page'),
+    page.locator('#open-options').click(),
+  ]);
+  await optionsPage.waitForLoadState();
 
-  await expect.poll(() => page.evaluate(() => window.__opened)).toBe(1);
+  expect(optionsPage.url()).toContain('options/options.html');
 });
 
 test('a failed save surfaces an error and keeps the previous mode checked', async ({ extPage }) => {

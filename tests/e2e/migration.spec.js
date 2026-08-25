@@ -1,11 +1,8 @@
 const { test, expect, storage } = require('./fixtures/extension');
 
-// The options page (Task 8) does not exist yet, so a second popup/popup.html
-// page stands in as the watcher: two separate popup pages are two separate
-// top-frame contexts, which is what this test needs.
 test('legacy { mode } is migrated to v2 exactly once by the top frame', async ({ extPage }) => {
-  const watcher = await extPage('popup/popup.html'); // stays open; survives the popup reload
-  // popup.js on this page also calls SL.store.load() on open, which performs
+  const watcher = await extPage('options/options.html'); // stays open; survives the popup reload
+  // options.js on this page also calls SL.store.load() on open, which performs
   // its own migration write against whatever storage state existed when this
   // page opened. Wait for that to settle before resetting storage below, or
   // it can race with storage.clear/storage.set and clobber the seeded value.
