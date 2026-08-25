@@ -34,10 +34,10 @@ async function routeSite(context) {
     route.fulfill({
       contentType: 'text/html',
       body: route.request().url().endsWith('/frame') ? FRAME_HTML : TOP_HTML,
-    })
+    }),
   );
   await context.route('https://example.com/**', (route) =>
-    route.fulfill({ contentType: 'text/html', body: OUTSIDE_HTML })
+    route.fulfill({ contentType: 'text/html', body: OUTSIDE_HTML }),
   );
 }
 
@@ -52,23 +52,23 @@ test('applies the composed dark matrix, and the inverse to images', async ({ con
   const svg = page.locator('#sl-theme-svg');
   await expect(svg.locator('#sl-matrix feColorMatrix')).toHaveAttribute(
     'values',
-    f.matrix.join(' ')
+    f.matrix.join(' '),
   );
   await expect(svg.locator('#sl-matrix-inverse feColorMatrix')).toHaveAttribute(
     'values',
-    f.inverseMatrix.join(' ')
+    f.inverseMatrix.join(' '),
   );
 
   expect(await page.evaluate(() => getComputedStyle(document.body).filter)).toContain(
-    'url("#sl-matrix")'
+    'url("#sl-matrix")',
   );
-  expect(
-    await page.locator('#pic').evaluate((el) => getComputedStyle(el).filter)
-  ).toContain('url("#sl-matrix-inverse")');
+  expect(await page.locator('#pic').evaluate((el) => getComputedStyle(el).filter)).toContain(
+    'url("#sl-matrix-inverse")',
+  );
 
   // --sl-bg is the *rendered* background, i.e. buildFilter's background.
   expect(
-    await page.evaluate(() => document.documentElement.style.getPropertyValue('--sl-bg'))
+    await page.evaluate(() => document.documentElement.style.getPropertyValue('--sl-bg')),
   ).toBe(f.background);
 });
 
@@ -88,9 +88,9 @@ test('switching to the identity light theme removes the attribute and the proper
   expect(
     await page.evaluate(() =>
       ['--sl-filter', '--sl-filter-inverse', '--sl-bg'].map((p) =>
-        document.documentElement.style.getPropertyValue(p)
-      )
-    )
+        document.documentElement.style.getPropertyValue(p),
+      ),
+    ),
   ).toEqual(['', '', '']);
 });
 

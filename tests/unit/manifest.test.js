@@ -1,5 +1,7 @@
-const test = require('node:test'); const assert = require('node:assert/strict');
-const fs = require('fs'); const path = require('path');
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('fs');
+const path = require('path');
 
 const manifestPath = path.join(__dirname, '../../src/manifest.json');
 const messagesPath = path.join(__dirname, '../../src/_locales/en/messages.json');
@@ -39,7 +41,10 @@ test('messages file parses as valid JSON', () => {
 test('extDescription message length <= 132', () => {
   assert.ok(messages.extDescription, 'extDescription key exists');
   assert.ok(messages.extDescription.message, 'extDescription.message exists');
-  assert.ok(messages.extDescription.message.length <= 132, `length ${messages.extDescription.message.length} <= 132`);
+  assert.ok(
+    messages.extDescription.message.length <= 132,
+    `length ${messages.extDescription.message.length} <= 132`,
+  );
 });
 
 test('every __MSG_x__ in manifest exists in messages', () => {

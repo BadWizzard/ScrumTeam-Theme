@@ -66,7 +66,10 @@
   // saveTimers/savesInFlight/generation at all).
   function hasInvalidHex(name) {
     const e = cards[name];
-    return e.bgHex.getAttribute('aria-invalid') === 'true' || e.textHex.getAttribute('aria-invalid') === 'true';
+    return (
+      e.bgHex.getAttribute('aria-invalid') === 'true' ||
+      e.textHex.getAttribute('aria-invalid') === 'true'
+    );
   }
 
   // True while a card has local state that hasn't (yet) been fully
@@ -96,7 +99,9 @@
     }
     const ratio = contrastRatio(theme.background, theme.text);
     e.hint.textContent =
-      ratio !== null && ratio < 4.5 ? `Low contrast (${ratio.toFixed(1)}:1) — text may be hard to read` : '';
+      ratio !== null && ratio < 4.5
+        ? `Low contrast (${ratio.toFixed(1)}:1) — text may be hard to read`
+        : '';
   }
 
   function updatePreview(name, theme) {

@@ -9,13 +9,20 @@
   --accent-hover: #026ec1;
   --selected: #04395e;
 }
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 body {
   margin: 0;
   width: 240px;
   background: var(--bg);
   color: var(--text);
-  font: 13px/1.4 system-ui, -apple-system, "Segoe UI", Ubuntu, sans-serif;
+  font:
+    13px/1.4 system-ui,
+    -apple-system,
+    'Segoe UI',
+    Ubuntu,
+    sans-serif;
 }
 header {
   display: flex;
@@ -25,8 +32,19 @@ header {
   background: var(--panel);
   border-bottom: 1px solid var(--border);
 }
-header h1 { margin: 0; flex: 1; font-size: 12px; font-weight: 500; color: var(--muted); }
-.dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+header h1 {
+  margin: 0;
+  flex: 1;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+}
 #open-options {
   border: none;
   background: transparent;
@@ -37,13 +55,24 @@ header h1 { margin: 0; flex: 1; font-size: 12px; font-weight: 500; color: var(--
   border-radius: 4px;
   cursor: pointer;
 }
-#open-options:hover { color: var(--text); background: var(--input); }
-#open-options:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
-.modes { display: flex; flex-direction: column; padding: 8px; gap: 4px; }
+#open-options:hover {
+  color: var(--text);
+  background: var(--input);
+}
+#open-options:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+.modes {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  gap: 4px;
+}
 .modes button {
   display: grid;
   grid-template-columns: 18px 1fr;
-  grid-template-areas: "icon label" "icon hint";
+  grid-template-areas: 'icon label' 'icon hint';
   align-items: center;
   text-align: left;
   padding: 8px 10px;
@@ -54,16 +83,34 @@ header h1 { margin: 0; flex: 1; font-size: 12px; font-weight: 500; color: var(--
   cursor: pointer;
   font: inherit;
 }
-.modes button:hover { background: var(--input); }
-.modes button:disabled { opacity: 0.6; cursor: default; }
-.modes button:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
-.modes button[aria-checked="true"] {
+.modes button:hover {
+  background: var(--input);
+}
+.modes button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.modes button:focus-visible {
+  outline: 1px solid var(--accent);
+  outline-offset: 1px;
+}
+.modes button[aria-checked='true'] {
   background: var(--selected);
   border-color: var(--accent);
 }
-.icon { grid-area: icon; color: var(--accent); }
-.label { grid-area: label; font-weight: 600; }
-.hint { grid-area: hint; font-size: 11px; color: var(--muted); }
+.icon {
+  grid-area: icon;
+  color: var(--accent);
+}
+.label {
+  grid-area: label;
+  font-weight: 600;
+}
+.hint {
+  grid-area: hint;
+  font-size: 11px;
+  color: var(--muted);
+}
 #status {
   margin: 0;
   padding: 0 12px 10px;
@@ -71,4 +118,6 @@ header h1 { margin: 0; flex: 1; font-size: 12px; font-weight: 500; color: var(--
   color: var(--muted);
   min-height: 1em;
 }
-#status[data-state="error"] { color: #f14c4c; }
+#status[data-state='error'] {
+  color: #f14c4c;
+}

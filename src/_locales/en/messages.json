@@ -1,5 +1,11 @@
 {
   "extName": { "message": "Dark Modern for ScrumLaunch Teams", "description": "Extension name" },
-  "extDescription": { "message": "Dark theme with customizable colors for teams.scrumlaunch.com. Dark / Light / System switch.", "description": "Extension description (max 132 chars)" },
-  "actionTitle": { "message": "Dark Modern for ScrumLaunch Teams — switch theme", "description": "Toolbar button tooltip" }
+  "extDescription": {
+    "message": "Dark theme with customizable colors for teams.scrumlaunch.com. Dark / Light / System switch.",
+    "description": "Extension description (max 132 chars)"
+  },
+  "actionTitle": {
+    "message": "Dark Modern for ScrumLaunch Teams — switch theme",
+    "description": "Toolbar button tooltip"
+  }
 }

@@ -89,17 +89,17 @@ None. All code ships inside the extension package; nothing is fetched or
 
 The extension does not collect or transmit any of the following:
 
-| Data type | Collected? |
-|---|---|
-| Personally identifiable information | No |
-| Health information | No |
-| Financial and payment information | No |
-| Authentication information | No |
-| Personal communications | No |
-| Location | No |
-| Web history | No |
-| User activity (clicks, keystrokes, etc.) | No |
-| Website content | No |
+| Data type                                | Collected? |
+| ---------------------------------------- | ---------- |
+| Personally identifiable information      | No         |
+| Health information                       | No         |
+| Financial and payment information        | No         |
+| Authentication information               | No         |
+| Personal communications                  | No         |
+| Location                                 | No         |
+| Web history                              | No         |
+| User activity (clicks, keystrokes, etc.) | No         |
+| Website content                          | No         |
 
 - Data is not sold to third parties.
 - Data is not used for purposes unrelated to the extension's single purpose.
@@ -122,9 +122,7 @@ one must be chosen before submission:
 - [ ] **Authorized** — ScrumLaunch has given written internal authorization
       for this listing (the author works at ScrumLaunch). If chosen, record
       here who authorized it and when, and remove the "Not affiliated..."
-      line from the description above:
-      - Authorized by: _______________________
-      - Date: _______________________
+      line from the description above: - Authorized by: _______________________ - Date: _______________________
 
 Neither box is ticked yet — this is a decision for the extension owner to
 make and record before the store submission, not something this task

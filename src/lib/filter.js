@@ -54,6 +54,7 @@
    */
   function saturate(s) {
     return {
+      // prettier-ignore
       a: [
         0.213 + 0.787 * s, 0.715 - 0.715 * s, 0.072 - 0.072 * s,
         0.213 - 0.213 * s, 0.715 + 0.285 * s, 0.072 - 0.072 * s,
@@ -69,6 +70,7 @@
    */
   function hueRotate180() {
     return {
+      // prettier-ignore
       a: [
         -0.574, 1.43, 0.144,
         0.426, 0.43, 0.144,
@@ -95,7 +97,7 @@
       }
     }
     const b = [0, 1, 2].map(
-      (i) => p.a[i * 3 + 0] * q.b[0] + p.a[i * 3 + 1] * q.b[1] + p.a[i * 3 + 2] * q.b[2] + p.b[i]
+      (i) => p.a[i * 3 + 0] * q.b[0] + p.a[i * 3 + 1] * q.b[1] + p.a[i * 3 + 2] * q.b[2] + p.b[i],
     );
     return { a, b };
   }
@@ -121,9 +123,19 @@
     const c21 = a2 * a3 - a0 * a5;
     const c22 = a0 * a4 - a1 * a3;
 
-    const inv = [c00 / det, c10 / det, c20 / det, c01 / det, c11 / det, c21 / det, c02 / det, c12 / det, c22 / det];
+    const inv = [
+      c00 / det,
+      c10 / det,
+      c20 / det,
+      c01 / det,
+      c11 / det,
+      c21 / det,
+      c02 / det,
+      c12 / det,
+      c22 / det,
+    ];
     const b = [0, 1, 2].map(
-      (i) => -(inv[i * 3 + 0] * t.b[0] + inv[i * 3 + 1] * t.b[1] + inv[i * 3 + 2] * t.b[2])
+      (i) => -(inv[i * 3 + 0] * t.b[0] + inv[i * 3 + 1] * t.b[1] + inv[i * 3 + 2] * t.b[2]),
     );
     return { a: inv, b };
   }
@@ -141,7 +153,7 @@
         normZero(t.a[i * 3 + 1]),
         normZero(t.a[i * 3 + 2]),
         0,
-        normZero(t.b[i])
+        normZero(t.b[i]),
       );
     }
     out.push(0, 0, 0, 1, 0);
@@ -172,9 +184,20 @@
    * @returns {{css: string, inverseCss: string, matrix: number[20], inverseMatrix: number[20], inverted: boolean, background: string}}
    */
   function buildFilter(theme, filterId = FILTER_ID) {
-    const { background, text, contrast: contrastPct, saturation: saturationPct, keepColors } = theme;
+    const {
+      background,
+      text,
+      contrast: contrastPct,
+      saturation: saturationPct,
+      keepColors,
+    } = theme;
 
-    if (background === '#ffffff' && text === '#000000' && contrastPct === 100 && saturationPct === 100) {
+    if (
+      background === '#ffffff' &&
+      text === '#000000' &&
+      contrastPct === 100 &&
+      saturationPct === 100
+    ) {
       return {
         css: 'none',
         inverseCss: 'none',
@@ -206,7 +229,17 @@
     };
   }
 
-  const api = { buildFilter, FILTER_ID, compose, invert, hueRotate180, saturate, contrast, tint, toFeValues };
+  const api = {
+    buildFilter,
+    FILTER_ID,
+    compose,
+    invert,
+    hueRotate180,
+    saturate,
+    contrast,
+    tint,
+    toFeValues,
+  };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else {
     root.SL = root.SL || {};

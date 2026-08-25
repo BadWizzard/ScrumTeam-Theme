@@ -10,13 +10,20 @@
   --error: #f14c4c;
 }
 
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 body {
   margin: 0;
   background: var(--bg);
   color: var(--text);
-  font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Ubuntu, sans-serif;
+  font:
+    14px/1.5 system-ui,
+    -apple-system,
+    'Segoe UI',
+    Ubuntu,
+    sans-serif;
 }
 
 header {
@@ -24,8 +31,16 @@ header {
   border-bottom: 1px solid var(--border);
   background: var(--panel);
 }
-header h1 { margin: 0 0 8px; font-size: 20px; }
-header p { margin: 0; max-width: 68ch; color: var(--muted); font-size: 13px; }
+header h1 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+header p {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--muted);
+  font-size: 13px;
+}
 
 main.cards {
   display: grid;
@@ -46,7 +61,10 @@ main.cards {
   border-radius: 8px;
   padding: 20px;
 }
-.card h2 { margin: 0 0 16px; font-size: 15px; }
+.card h2 {
+  margin: 0 0 16px;
+  font-size: 15px;
+}
 
 .field {
   display: flex;
@@ -54,14 +72,17 @@ main.cards {
   gap: 4px;
   margin-bottom: 14px;
 }
-.field label { font-size: 12px; color: var(--muted); }
+.field label {
+  font-size: 12px;
+  color: var(--muted);
+}
 
 .color-input {
   display: flex;
   align-items: center;
   gap: 8px;
 }
-.color-input input[type="color"] {
+.color-input input[type='color'] {
   width: 32px;
   height: 32px;
   padding: 0;
@@ -70,7 +91,7 @@ main.cards {
   background: var(--input);
   cursor: pointer;
 }
-.color-input input[type="text"] {
+.color-input input[type='text'] {
   flex: 1;
   padding: 6px 8px;
   border: 1px solid var(--border);
@@ -79,7 +100,7 @@ main.cards {
   color: var(--text);
   font: inherit;
 }
-.color-input input[type="text"][aria-invalid="true"] {
+.color-input input[type='text'][aria-invalid='true'] {
   border-color: var(--error);
 }
 
@@ -88,7 +109,7 @@ main.cards {
   align-items: center;
   gap: 10px;
 }
-.range-input input[type="range"] {
+.range-input input[type='range'] {
   flex: 1;
   accent-color: var(--accent);
 }
@@ -105,7 +126,10 @@ main.cards {
   flex-wrap: wrap;
   gap: 8px;
 }
-.checkbox-field label { color: var(--text); font-size: 13px; }
+.checkbox-field label {
+  color: var(--text);
+  font-size: 13px;
+}
 .checkbox-field .hint-static {
   font-size: 11px;
   color: var(--muted);
@@ -159,8 +183,15 @@ main.cards {
   background: #eeeeee;
   font-weight: 600;
 }
-.preview-content h3 { width: 100%; margin: 0; font-size: 14px; }
-.preview-content p { width: 100%; margin: 0; }
+.preview-content h3 {
+  width: 100%;
+  margin: 0;
+  font-size: 14px;
+}
+.preview-content p {
+  width: 100%;
+  margin: 0;
+}
 .preview-primary {
   border: none;
   border-radius: 4px;
@@ -169,7 +200,9 @@ main.cards {
   color: #ffffff;
   font: inherit;
 }
-.preview-link { color: #0078d4; }
+.preview-link {
+  color: #0078d4;
+}
 .preview-badge {
   border-radius: 10px;
   padding: 1px 8px;
@@ -177,7 +210,9 @@ main.cards {
   color: #ffffff;
   font-size: 11px;
 }
-.preview-image { display: block; }
+.preview-image {
+  display: block;
+}
 
 .reset-theme {
   border: 1px solid var(--border);
@@ -188,7 +223,10 @@ main.cards {
   font: inherit;
   cursor: pointer;
 }
-.reset-theme:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.reset-theme:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
 
 footer {
   display: flex;
@@ -206,12 +244,17 @@ footer {
   font: inherit;
   cursor: pointer;
 }
-#reset-all:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+#reset-all:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
 #status {
   font-size: 12px;
   color: var(--muted);
 }
-#status[data-state="error"] { color: var(--error); }
+#status[data-state='error'] {
+  color: var(--error);
+}
 
 button:focus-visible,
 input:focus-visible,

@@ -50,16 +50,16 @@ eslint.config.js, .prettierrc, playwright.config.js
 
 ## Scripts
 
-| Script | Command | What it does |
-|---|---|---|
-| `lint` | `eslint . && prettier --check .` | Lints the whole repo and fails if anything is unformatted. |
-| `format` | `prettier -w .` | Formats the whole repo. |
-| `test:unit` | `node --test tests/unit/` | Runs the pure-logic unit tests (no browser). |
-| `test:e2e` | `playwright test` | Runs the offline Playwright suite (`tests/e2e/`); `site.spec.js` self-skips unless `E2E_SITE=1`. |
-| `test` | `npm run test:unit && npm run test:e2e` | Everything CI runs on every push/PR. |
-| `test:site` | `E2E_SITE=1 playwright test tests/e2e/site.spec.js` | Runs only the real-site smoke test, against network. |
-| `package` | `scripts/package.sh` | Builds the Web Store upload zip into `dist/`. |
-| `screenshots` | `playwright test --config=scripts/screenshots.config.js` | Generates `store/options.png` and (with `E2E_SITE=1`) `store/site-dark.png`. |
+| Script        | Command                                                  | What it does                                                                                     |
+| ------------- | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `lint`        | `eslint . && prettier --check .`                         | Lints the whole repo and fails if anything is unformatted.                                       |
+| `format`      | `prettier -w .`                                          | Formats the whole repo.                                                                          |
+| `test:unit`   | `node --test tests/unit/`                                | Runs the pure-logic unit tests (no browser).                                                     |
+| `test:e2e`    | `playwright test`                                        | Runs the offline Playwright suite (`tests/e2e/`); `site.spec.js` self-skips unless `E2E_SITE=1`. |
+| `test`        | `npm run test:unit && npm run test:e2e`                  | Everything CI runs on every push/PR.                                                             |
+| `test:site`   | `E2E_SITE=1 playwright test tests/e2e/site.spec.js`      | Runs only the real-site smoke test, against network.                                             |
+| `package`     | `scripts/package.sh`                                     | Builds the Web Store upload zip into `dist/`.                                                    |
+| `screenshots` | `playwright test --config=scripts/screenshots.config.js` | Generates `store/options.png` and (with `E2E_SITE=1`) `store/site-dark.png`.                     |
 
 ## Testing
 
@@ -74,7 +74,7 @@ eslint.config.js, .prettierrc, playwright.config.js
 - **Offline e2e** (`npm run test:e2e`, Playwright + Chromium with the unpacked
   extension, no network): popup, options and migration behavior — see the
   spec files in `tests/e2e/` for the exact assertions (default selections,
-  field-level writes that never clobber the *other* theme, serialized saves
+  field-level writes that never clobber the _other_ theme, serialized saves
   within a page, invalid-hex handling, low-contrast hints, failed-save error
   states, exactly-once v1→v2 migration). `content.spec.js` covers the content
   script offline by serving the site's URL from an in-memory fixture with
@@ -83,7 +83,7 @@ eslint.config.js, .prettierrc, playwright.config.js
   what `ci.yml` runs on every push and pull request, and it must stay green
   with no network access.
 - **Real-site smoke** (`npm run test:site`, i.e. `E2E_SITE=1 playwright test
-  tests/e2e/site.spec.js`): opens the real `teams.scrumlaunch.com/time-tracker`
+tests/e2e/site.spec.js`): opens the real `teams.scrumlaunch.com/time-tracker`
   unauthenticated and asserts the composed matrix actually recolors sampled
   canvas pixels correctly, relative to the untransformed pixel — a check that
   stays valid even if the site changes its own colors. This is **not** part of

@@ -12,7 +12,10 @@ test('merge replaces mode only', () => {
 test('merge patches one theme field and leaves the other theme untouched', () => {
   const base = {
     ...DEFAULT_SETTINGS,
-    themes: { ...DEFAULT_SETTINGS.themes, light: { ...DEFAULT_SETTINGS.themes.light, background: '#f5efe0' } },
+    themes: {
+      ...DEFAULT_SETTINGS.themes,
+      light: { ...DEFAULT_SETTINGS.themes.light, background: '#f5efe0' },
+    },
   };
   const m = merge(base, { themes: { dark: { background: '#101820' } } });
   assert.equal(m.themes.dark.background, '#101820');

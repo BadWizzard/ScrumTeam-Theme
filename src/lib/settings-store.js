@@ -10,7 +10,9 @@
     (root && root.SL && root.SL.defaults) ||
     (typeof require === 'function' && require('./defaults.js'));
   if (!settings || !defaults) {
-    throw new Error('[SL] settings-store.js requires settings.js and defaults.js to be loaded first');
+    throw new Error(
+      '[SL] settings-store.js requires settings.js and defaults.js to be loaded first',
+    );
   }
   const { normalizeSettings } = settings;
   const { SETTINGS_VERSION } = defaults;
@@ -27,7 +29,8 @@
   function merge(base, patch) {
     const out = { ...base, ...patch, themes: { ...base.themes } };
     for (const k of ['dark', 'light']) {
-      if (patch.themes && patch.themes[k]) out.themes[k] = { ...base.themes[k], ...patch.themes[k] };
+      if (patch.themes && patch.themes[k])
+        out.themes[k] = { ...base.themes[k], ...patch.themes[k] };
     }
     return out;
   }
@@ -42,7 +45,7 @@
         if (chrome.runtime.lastError) return rej(new Error(chrome.runtime.lastError.message));
         if (removeKeys) chrome.storage.sync.remove(removeKeys, () => res(newSettings));
         else res(newSettings);
-      })
+      }),
     );
   }
 

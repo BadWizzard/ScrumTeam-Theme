@@ -18,7 +18,9 @@ test('legacy { mode } is migrated to v2 exactly once by the top frame', async ({
   // drive it explicitly).
   await openSettled('options/options.html');
 
-  await expect.poll(() => storage.get(watcher)).toMatchObject({ settings: { v: 2, mode: 'light' } });
+  await expect
+    .poll(() => storage.get(watcher))
+    .toMatchObject({ settings: { v: 2, mode: 'light' } });
   const all = await storage.get(watcher);
   expect(all.mode).toBeUndefined();
   expect(all.settings.themes.dark.background).toBe('#1f1f1f');

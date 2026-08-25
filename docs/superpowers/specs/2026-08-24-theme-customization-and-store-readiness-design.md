@@ -12,7 +12,7 @@ documentation that follow Chrome extension best practices.
 
 - teams.scrumlaunch.com is a Flutter Web app rendered with CanvasKit: the UI is one `<canvas>`.
   Per-element CSS cannot recolor it; only whole-page filters can. Customization is therefore
-  expressed as *how the filter transforms the page*, not per-element colors.
+  expressed as _how the filter transforms the page_, not per-element colors.
 - No build step / bundler. Plain scripts, loadable unpacked as-is from `src/`.
 - Single permission: `storage`. Content script limited to `*://teams.scrumlaunch.com/*`.
 - No remote code, no analytics, no data collection.
@@ -65,6 +65,7 @@ Helpers (in `lib/filter.js`, unit-tested): `compose(a, b)` (affine product), `in
 ## Settings
 
 `chrome.storage.sync`, key `settings`:
+
 ```
 {
   v: 2,
@@ -75,6 +76,7 @@ Helpers (in `lib/filter.js`, unit-tested): `compose(a, b)` (affine product), `in
   }
 }
 ```
+
 - `DEFAULT_SETTINGS`, `DEFAULT_THEMES`, `MODES`, `DEFAULT_MODE`, `SETTINGS_VERSION`, `RANGE`
   live in `lib/defaults.js`.
 - `normalizeSettings(raw)` returns a valid settings object from anything: merges missing keys
@@ -101,7 +103,7 @@ Helpers (in `lib/filter.js`, unit-tested): `compose(a, b)` (affine product), `in
   changed (`{ themes: { dark: {...} } }`). Within one page, saves are **serialized** through
   a promise chain, so a second save always re-reads after the first has been written — read-
   modify-write can't drop a patch. Across pages and devices there is no shared chain: the
-  merge is field-level, so a stale snapshot cannot clobber a *different* field, but the same
+  merge is field-level, so a stale snapshot cannot clobber a _different_ field, but the same
   field is last-write-wins. True cross-context atomicity would need a background worker and
   is out of scope.
   `save` rejects when `chrome.runtime.lastError` is set; **every caller surfaces that**
@@ -155,12 +157,14 @@ Helpers (in `lib/filter.js`, unit-tested): `compose(a, b)` (affine product), `in
 ## UI
 
 ### Popup
+
 Three-way switch (Dark / Light / System) + a ⚙ button that calls
 `chrome.runtime.openOptionsPage()`. On click: `store.save({ mode })` → re-render from the
 resolved settings; on rejection, a status line under the switch shows
 "Not saved — <message>" and the previous selection is re-rendered.
 
 ### Options page (`options.html`, `options_ui.open_in_tab: true`)
+
 - Header: title, one-sentence explanation of the canvas limitation.
 - Two cards side by side (stack on narrow widths): **Dark theme**, **Light theme**. Each:
   - Background: `<input type="color">` + hex text input (kept in sync, validated `#rrggbb`).
@@ -226,6 +230,7 @@ action { default_popup, default_icon, default_title },
 options_ui { page: "options/options.html", open_in_tab: true },
 content_scripts [{ matches: ["*://teams.scrumlaunch.com/*"], css, js, run_at: document_start, all_frames: true }]
 ```
+
 No `host_permissions`, no background worker, no `web_accessible_resources`.
 
 ## Testing

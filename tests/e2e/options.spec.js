@@ -1,11 +1,4 @@
-const {
-  test,
-  expect,
-  storage,
-  settled,
-  seed,
-  installFailingSet,
-} = require('./fixtures/extension');
+const { test, expect, storage, settled, seed, installFailingSet } = require('./fixtures/extension');
 const { buildFilter } = require('../../src/lib/filter.js');
 const { DEFAULT_THEMES } = require('../../src/lib/defaults.js');
 
@@ -29,7 +22,7 @@ test('renders the default dark and light themes on load', async ({ openSettled }
   await expect(darkTextHex(page)).toHaveValue(DEFAULT_THEMES.dark.text);
   await expect(lightBgHex(page)).toHaveValue(DEFAULT_THEMES.light.background);
   await expect(
-    page.locator('section[data-theme="light"] input[type="text"][data-field="text"]')
+    page.locator('section[data-theme="light"] input[type="text"][data-field="text"]'),
   ).toHaveValue(DEFAULT_THEMES.light.text);
 });
 
@@ -62,11 +55,11 @@ test('editing the dark background writes only themes.dark and updates the previe
 
   const expectedValues = buildFilter(
     { ...DEFAULT_THEMES.dark, background: '#101820' },
-    'sl-matrix-dark'
+    'sl-matrix-dark',
   ).matrix.join(' ');
   await expect(page.locator('#sl-matrix-dark feColorMatrix')).toHaveAttribute(
     'values',
-    expectedValues
+    expectedValues,
   );
 
   const previewFilter = await page

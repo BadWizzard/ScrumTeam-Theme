@@ -20,7 +20,7 @@ this project's versioning follows the extension's `src/manifest.json`
 - Settings schema v2 (`{ v: 2, mode, themes: { dark, light } }`) with
   automatic migration from the v1 `{ mode }` shape. Saves within one page are
   serialized, and the write itself is a field-level merge, so an edit on one
-  surface (popup vs. options) or device cannot clobber a *different* field
+  surface (popup vs. options) or device cannot clobber a _different_ field
   edited on another; the same field is last-write-wins.
 - A gear button in the popup that opens the new options page.
 - Store-readiness: `_locales/en` manifest metadata, extension icons,
