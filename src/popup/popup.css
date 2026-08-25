@@ -55,6 +55,7 @@ header h1 { margin: 0; flex: 1; font-size: 12px; font-weight: 500; color: var(--
   font: inherit;
 }
 .modes button:hover { background: var(--input); }
+.modes button:disabled { opacity: 0.6; cursor: default; }
 .modes button:focus-visible { outline: 1px solid var(--accent); outline-offset: 1px; }
 .modes button[aria-checked="true"] {
   background: var(--selected);

@@ -5,6 +5,41 @@ test.beforeEach(async ({ extPage }) => {
   await storage.clear(page);
 });
 
+// Installs a chrome.storage.sync.set stub that always fails with
+// chrome.runtime.lastError = { message: 'QUOTA' }, so SL.store.save()
+// rejects. Stashes the real implementation on window so restoreRealSet can
+// put it back.
+async function installFailingSet(page) {
+  await page.evaluate(() => {
+    window.__slRealSet = window.__slRealSet || chrome.storage.sync.set.bind(chrome.storage.sync);
+    const stub = (items, cb) => {
+      Object.defineProperty(chrome.runtime, 'lastError', {
+        value: { message: 'QUOTA' },
+        configurable: true,
+      });
+      cb();
+      delete chrome.runtime.lastError;
+    };
+    try {
+      chrome.storage.sync.set = stub;
+    } catch {
+      try {
+        Object.defineProperty(chrome.storage.sync, 'set', { value: stub, configurable: true });
+      } catch {
+        const real = chrome.storage.sync;
+        const proxy = new Proxy(real, { get: (t, k) => (k === 'set' ? stub : t[k]) });
+        Object.defineProperty(chrome.storage, 'sync', { value: proxy, configurable: true });
+      }
+    }
+  });
+}
+
+async function restoreRealSet(page) {
+  await page.evaluate(() => {
+    chrome.storage.sync.set = window.__slRealSet;
+  });
+}
+
 test('default mode is Dark and is checked on load', async ({ extPage }) => {
   const page = await extPage('popup/popup.html');
   await expect(page.locator('button[data-mode="dark"]')).toHaveAttribute('aria-checked', 'true');
@@ -74,27 +109,7 @@ test('a failed save surfaces an error and keeps the previous mode checked', asyn
   // Confirm dark is the starting checked mode before we break writes.
   await expect(page.locator('button[data-mode="dark"]')).toHaveAttribute('aria-checked', 'true');
 
-  await page.evaluate(() => {
-    const stub = (items, cb) => {
-      Object.defineProperty(chrome.runtime, 'lastError', {
-        value: { message: 'QUOTA' },
-        configurable: true,
-      });
-      cb();
-      delete chrome.runtime.lastError;
-    };
-    try {
-      chrome.storage.sync.set = stub;
-    } catch {
-      try {
-        Object.defineProperty(chrome.storage.sync, 'set', { value: stub, configurable: true });
-      } catch {
-        const real = chrome.storage.sync;
-        const proxy = new Proxy(real, { get: (t, k) => (k === 'set' ? stub : t[k]) });
-        Object.defineProperty(chrome.storage, 'sync', { value: proxy, configurable: true });
-      }
-    }
-  });
+  await installFailingSet(page);
 
   await page.locator('button[data-mode="system"]').click();
 
@@ -102,4 +117,48 @@ test('a failed save surfaces an error and keeps the previous mode checked', asyn
   await expect(page.locator('#status')).toHaveAttribute('data-state', 'error');
   await expect(page.locator('button[data-mode="dark"]')).toHaveAttribute('aria-checked', 'true');
   await expect(page.locator('button[data-mode="system"]')).toHaveAttribute('aria-checked', 'false');
+});
+
+test('rapid clicks while saves are failing settle on one consistent mode, not a third value', async ({
+  extPage,
+}) => {
+  const page = await extPage('popup/popup.html');
+  await expect(page.locator('button[data-mode="dark"]')).toHaveAttribute('aria-checked', 'true');
+
+  await installFailingSet(page);
+
+  // Fire both clicks without awaiting the first before issuing the second.
+  // The in-flight-save guard (buttons disabled while a save is pending)
+  // serializes the two underlying saves; without it the UI could revert to
+  // a stale pre-both-clicks snapshot that matches neither click.
+  const clickLight = page.locator('button[data-mode="light"]').click();
+  const clickSystem = page.locator('button[data-mode="system"]').click();
+  await clickLight;
+  await clickSystem;
+
+  await expect(page.locator('#status')).toContainText('Not saved');
+
+  const stored = await storage.get(page);
+  const checked = page.locator('.modes button[aria-checked="true"]');
+  await expect(checked).toHaveCount(1);
+  await expect(checked).toHaveAttribute('data-mode', stored.settings.mode);
+});
+
+test('a successful save after a failure clears the error status', async ({ extPage }) => {
+  const page = await extPage('popup/popup.html');
+  await installFailingSet(page);
+
+  await page.locator('button[data-mode="light"]').click();
+  await expect(page.locator('#status')).toContainText('Not saved');
+  await expect(page.locator('#status')).toHaveAttribute('data-state', 'error');
+
+  await restoreRealSet(page);
+
+  await page.locator('button[data-mode="light"]').click();
+  await expect(page.locator('button[data-mode="light"]')).toHaveAttribute('aria-checked', 'true');
+  await expect(page.locator('#status')).toHaveText('');
+  await expect(page.locator('#status')).not.toHaveAttribute('data-state', 'error');
+
+  const stored = await storage.get(page);
+  expect(stored.settings.mode).toBe('light');
 });

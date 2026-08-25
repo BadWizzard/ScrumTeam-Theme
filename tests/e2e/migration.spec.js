@@ -19,10 +19,10 @@ test('legacy { mode } is migrated to v2 exactly once by the top frame', async ({
     });
   });
 
-  const popup = await extPage('popup/popup.html');
-  // popup.js calls SL.store.load() on script start, so the reload alone
-  // triggers the migration write-back (no need to drive it explicitly).
-  await popup.reload();
+  // popup.js calls SL.store.load() on script start, so simply opening the
+  // popup page triggers the migration write-back (no need to reload or
+  // drive it explicitly).
+  await extPage('popup/popup.html');
 
   await expect.poll(() => storage.get(watcher)).toMatchObject({ settings: { v: 2, mode: 'light' } });
   const all = await storage.get(watcher);
