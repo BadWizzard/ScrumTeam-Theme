@@ -57,3 +57,9 @@ test('helpers: compose then invert round-trips', () => {
   close(ap(inv, ap(m, p)), p, 1e-9);
   assert.equal(F.invert({ a: [1,0,0, 0,0,0, 0,0,1], b: [0,0,0] }), null);
 });
+test('background is the rendered background M(white), not the raw theme background', () => {
+  assert.equal(F.buildFilter(ID).background, '#ffffff');
+  assert.equal(F.buildFilter(DM).background, '#1f1f1f');
+  assert.equal(F.buildFilter({ ...DM, contrast: 150 }).background, '#000000');
+  assert.equal(F.buildFilter({ ...DM, background: '#101820', saturation: 150 }).background, '#0d1925');
+});

@@ -5,7 +5,7 @@
   if (!color) {
     throw new Error('[SL] filter.js requires color.js to be loaded first');
   }
-  const { parseHex, luminance } = color;
+  const { parseHex, toHex, luminance } = color;
 
   const FILTER_ID = 'sl-matrix';
 
@@ -151,10 +151,25 @@
   const IDENTITY_MATRIX = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0];
 
   /**
+   * The color the filtered page actually renders where it painted white —
+   * i.e. `M([1,1,1])`, clamped to the sRGB gamut and formatted as hex. This
+   * is what unfiltered chrome outside the filtered subtree (the `<html>`
+   * background, the scrollbar track/thumb) must match; `theme.background`
+   * only equals it when contrast and saturation are both 100.
+   * @param {{a: number[9], b: number[3]}} t
+   * @returns {string} - Lowercase '#rrggbb'
+   */
+  function renderedBackground(t) {
+    const channel = (i) =>
+      Math.min(255, Math.max(0, (t.a[i * 3] + t.a[i * 3 + 1] + t.a[i * 3 + 2] + t.b[i]) * 255));
+    return toHex({ r: channel(0), g: channel(1), b: channel(2) });
+  }
+
+  /**
    * Build the composed feColorMatrix filter (and its exact inverse) for a theme.
    * @param {{background: string, text: string, contrast: number, saturation: number, keepColors: boolean}} theme
    * @param {string} [filterId]
-   * @returns {{css: string, inverseCss: string, matrix: number[20], inverseMatrix: number[20], inverted: boolean}}
+   * @returns {{css: string, inverseCss: string, matrix: number[20], inverseMatrix: number[20], inverted: boolean, background: string}}
    */
   function buildFilter(theme, filterId = FILTER_ID) {
     const { background, text, contrast: contrastPct, saturation: saturationPct, keepColors } = theme;
@@ -166,6 +181,7 @@
         matrix: IDENTITY_MATRIX.slice(),
         inverseMatrix: IDENTITY_MATRIX.slice(),
         inverted: false,
+        background: '#ffffff',
       };
     }
 
@@ -186,6 +202,7 @@
       matrix: toFeValues(M),
       inverseMatrix,
       inverted,
+      background: renderedBackground(M),
     };
   }
 

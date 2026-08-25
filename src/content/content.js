@@ -26,16 +26,19 @@
   function apply() {
     if (!settings) return;
     const theme = settings.themes[resolveTheme(settings.mode, media.matches)];
-    const { css, inverseCss, matrix, inverseMatrix, inverted } = buildFilter(theme);
+    const { css, inverseCss, matrix, inverseMatrix, inverted, background } = buildFilter(theme);
     const root = document.documentElement;
     if (css === 'none') { root.removeAttribute('data-sl-theme'); for (const p of ['--sl-filter', '--sl-filter-inverse', '--sl-bg']) root.style.removeProperty(p); return; }
     const { fwd, inv } = ensureSvg();
     fwd.setAttribute('values', matrix.join(' ')); inv.setAttribute('values', inverseMatrix.join(' '));
     root.style.setProperty('--sl-filter', css); root.style.setProperty('--sl-filter-inverse', inverseCss);
-    root.style.setProperty('--sl-bg', theme.background);
+    // The rendered background (M(white)), not theme.background: the <html>
+    // background and the scrollbars sit outside the filtered subtree, so they
+    // must match what the filter actually paints under contrast/saturation.
+    root.style.setProperty('--sl-bg', background);
     root.setAttribute('data-sl-theme', inverted ? 'dark' : 'light');
   }
-  store.load().then(s => { settings = s; apply(); });
+  store.load().then(s => { settings = s; apply(); }).catch(e => console.warn('[SL] load failed', e));
   store.onChange(s => { settings = s; apply(); });
   media.addEventListener('change', apply);
 })();
