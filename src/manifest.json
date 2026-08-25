@@ -1,16 +1,18 @@
 {
   "manifest_version": 3,
-  "name": "ScrumLaunch Teams — Dark Modern",
-  "version": "1.0.0",
+  "name": "__MSG_extName__",
+  "version": "2.0.0",
+  "description": "__MSG_extDescription__",
+  "default_locale": "en",
   "minimum_chrome_version": "111",
-  "description": "Dark theme (Cursor / VS Code Dark Modern palette) for teams.scrumlaunch.com with a Dark / Light / System switch.",
+  "homepage_url": "https://github.com/BadWizzard/ScrumTeam-Theme",
   "permissions": ["storage"],
+  "icons": { "16": "icons/icon16.png", "32": "icons/icon32.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
   "action": {
-    "default_title": "ScrumLaunch theme",
+    "default_title": "__MSG_actionTitle__",
     "default_popup": "popup/popup.html",
-    "default_icon": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
+    "default_icon": { "16": "icons/icon16.png", "32": "icons/icon32.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
   },
-  "icons": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
   "options_ui": { "page": "options/options.html", "open_in_tab": true },
   "content_scripts": [
     {
