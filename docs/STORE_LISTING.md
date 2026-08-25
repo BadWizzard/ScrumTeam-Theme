@@ -38,7 +38,7 @@ The extension only ever touches teams.scrumlaunch.com. It requests a single
 permission (storage, to save your theme choice via Chrome sync) and
 contains no remote code, no analytics and no data collection of any kind.
 
-Not affiliated with or endorsed by ScrumLaunch.
+Built by a ScrumLaunch team member for ScrumLaunch Teams users.
 ```
 
 ## Category
@@ -119,14 +119,15 @@ one must be chosen before submission:
 - [ ] **Unaffiliated** — ship as a third-party add-on. The description keeps
       the line "Not affiliated with or endorsed by ScrumLaunch." (already
       included above; no further action needed if this option is chosen).
-- [ ] **Authorized** — ScrumLaunch has given written internal authorization
-      for this listing (the author works at ScrumLaunch). If chosen, record
-      here who authorized it and when, and remove the "Not affiliated..."
-      line from the description above: - Authorized by: _______________________ - Date: _______________________
+- [x] **Authorized** — ScrumLaunch has given internal authorization for this
+      listing (the author works at ScrumLaunch). The "Not affiliated..." line
+      has been removed from the description above.
+  - Authorized by: internal ScrumLaunch authorization, recorded by the author
+    (Valera, valera@scrumlaunch.com). **Before submission: add the approving
+    manager's name here.**
+  - Date: 2026-08-25
 
-Neither box is ticked yet — this is a decision for the extension owner to
-make and record before the store submission, not something this task
-resolves unilaterally.
+Decision recorded 2026-08-25: **Authorized**.
 
 ## Privacy policy URL
 
