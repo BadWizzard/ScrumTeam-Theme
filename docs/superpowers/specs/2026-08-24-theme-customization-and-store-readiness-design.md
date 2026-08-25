@@ -39,7 +39,18 @@ For a theme `{ background, text, contrast, saturation, keepColors }`:
 4. Identity shortcut: background `#ffffff`, text `#000000`, contrast 100, saturation 100 →
    filter is `none` and nothing is injected. This is the light default = site untouched.
 
-`buildFilter(theme)` returns `{ css, matrix: number[20], inverted }` and is a pure function.
+5. **Inverse filter for real DOM images.** Images, videos and `<picture>` elements outside the
+   canvas must not be recolored. `buildFilter` also emits `inverseMatrix`: per channel, if
+   `bg_c ≠ text_c`, scale `1/(bg_c-text_c)` and offset `-text_c/(bg_c-text_c)` (so
+   `inverse(forward(x)) = x`); if `bg_c == text_c` (degenerate channel) the inverse row is the
+   identity. The inverse CSS chain is `url(#<id>-inverse)` followed by `hue-rotate(180deg)`
+   when the forward chain used it. Contrast/saturation are intentionally not undone for
+   images (they are mild, and their exact inverse is not expressible as a CSS filter).
+
+`buildFilter(theme, filterId = 'sl-matrix')` returns
+`{ css, inverseCss, matrix: number[20], inverseMatrix: number[20], inverted }` and is a pure
+function. `filterId` lets the options page preview use its own ids (`sl-matrix-dark`,
+`sl-matrix-light`) without rewriting the css string.
 
 ## Settings
 
@@ -56,14 +67,26 @@ For a theme `{ background, text, contrast, saturation, keepColors }`:
 ```
 - `DEFAULT_SETTINGS` lives in `lib/defaults.js`.
 - `normalizeSettings(raw)` returns a valid settings object from anything: merges missing keys
-  from defaults, validates hex colors (`#rrggbb`, lowercased), clamps contrast/saturation to
-  50..150, coerces `keepColors` to boolean, maps unknown `mode` to `dark`.
+  from defaults, validates hex colors (strict `#rrggbb` only — no `#rgb` shorthand — lowercased),
+  clamps numeric contrast/saturation to 50..150 (non-numeric → default 100),
+  `keepColors = raw == null ? default : Boolean(raw)` (so a missing or `null` value keeps the
+  default `true`, `0`/`false`/`''` → `false`, any other value → `true`), maps unknown `mode`
+  to `dark`, drops unknown keys.
 - Migration: v1 stored `{ mode }` at the top level. `normalizeSettings` accepts
-  `{ mode }` (no `v`) and produces v2. The content script/popup/options call it on every read,
-  so no explicit migration step is needed; `settings-store.js` writes back the normalized
-  object once on first load.
-- `settings-store.js`: `load() → Promise<settings>`, `save(patch)`, `onChange(cb)`.
-  All UI writes the whole `settings` object (small; no partial-key races).
+  `{ mode }` (no `v`) and produces v2. Every reader normalizes, so the app works without an
+  explicit migration. Additionally, `load()` writes the normalized v2 object back **only when
+  the stored value was not already v2 and the caller is the top frame**
+  (`window === window.top`) — the content script runs in every frame of every tab, and
+  `chrome.storage.sync` has write quotas (120 ops/min, 1800/hour), so sub-frames must not
+  each issue the same write. The write-back removes the legacy top-level `mode` key.
+- `settings-store.js`: `load() → Promise<settings>`, `save(patch) → Promise<settings>`,
+  `onChange(cb)`.
+  `save(patch)` **re-reads storage, deep-merges the patch** (`mode`, and `themes.dark` /
+  `themes.light` merged per field), normalizes, writes, and resolves with the result. The
+  popup therefore writes only `{ mode }`, and the options page writes only the theme it
+  changed (`{ themes: { dark: {...} } }`), so a stale snapshot on one surface or device can
+  never clobber changes made on another (last-write-wins on the *field*, not the object).
+  `save` rejects when `chrome.runtime.lastError` is set; callers must surface that.
 
 ## Content script
 
@@ -73,21 +96,27 @@ For a theme `{ background, text, contrast, saturation, keepColors }`:
 - `applyTheme(theme)`:
   - `buildFilter(theme)`; if `css === 'none'` → remove `data-sl-theme` attribute and the
     `--sl-filter` variable; done.
-  - Ensure an `<svg id="sl-theme-svg" aria-hidden="true">` with
-    `<filter id="sl-matrix" color-interpolation-filters="sRGB"><feColorMatrix type="matrix">`
-    exists as a child of `document.documentElement` (not `body`, so Flutter never touches it;
-    inserted as soon as `documentElement` exists, i.e. at `document_start`).
-  - Set `feColorMatrix.values` = matrix, `html.style.setProperty('--sl-filter', css)`,
-    `html[data-sl-theme]` = `'dark'` if inverted else `'light'`.
+  - Ensure an `<svg id="sl-theme-svg" aria-hidden="true">` with two filters,
+    `<filter id="sl-matrix">` and `<filter id="sl-matrix-inverse">`, each
+    `color-interpolation-filters="sRGB"` with one `<feColorMatrix type="matrix">`, exists as a
+    child of `document.documentElement` (not `body`, so Flutter never touches it; inserted as
+    soon as `documentElement` exists, i.e. at `document_start`).
+  - Set both `feColorMatrix.values` (matrix / inverseMatrix),
+    `html.style.setProperty('--sl-filter', css)`, `--sl-filter-inverse` = `inverseCss`,
+    `--sl-bg` = theme background, `html[data-sl-theme]` = `'dark'` if inverted else `'light'`.
 - Re-applies on `chrome.storage.onChanged` (key `settings`) and on
   `matchMedia('(prefers-color-scheme: dark)')` change.
 - `theme.css`:
   ```
+  html[data-sl-theme] { background: var(--sl-bg) !important; }
+  html[data-sl-theme="dark"] { color-scheme: dark; }
   html[data-sl-theme] body { filter: var(--sl-filter); min-height: 100vh; }
-  html[data-sl-theme="dark"] { background: <handled via variable --sl-bg>; color-scheme: dark; }
+  html[data-sl-theme] body :is(img, video, picture, [style*="background-image"]) { filter: var(--sl-filter-inverse); }
+  html[data-sl-theme] #splash img { filter: none; }   /* splash ships its own dark variant */
   ```
   plus scrollbar rules for the dark case. `--sl-bg` is set to the theme background so the
-  area outside `body` matches.
+  area outside `body` matches. The image rule preserves v1 behaviour (real DOM images keep
+  their original colors) under any user-chosen matrix.
 - Verification item: `url(#sl-matrix)` must resolve as a same-document reference despite the
   page's `<base href="/">`. Chrome treats fragment-only URLs as local references; the e2e
   smoke test asserts `getComputedStyle(body).filter` contains `url("#sl-matrix")` **and** that
@@ -167,24 +196,38 @@ No `host_permissions`, no background worker, no `web_accessible_resources`.
   colors/ranges, unknown mode; `resolveTheme` (existing).
 - E2E (Playwright, Chromium with extension loaded):
   - popup: default selection is Dark; clicking modes persists to storage; gear opens options.
-  - options: renders defaults; changing dark background persists and updates preview;
-    per-theme reset restores defaults; reset-all restores mode + both themes; hex input
-    validation.
-  - real-site smoke (skipped when `E2E_SITE=0` or offline): on
-    https://teams.scrumlaunch.com/time-tracker the `<html>` gets `data-sl-theme="dark"`, body
-    filter contains `url("#sl-matrix")`, and a sampled background pixel equals the configured
-    background (±2/255); switching to Light removes the filter.
-- CI runs lint + unit + e2e (site smoke enabled; failure of the smoke because the site is
-  unreachable is reported as skipped, not failed).
+  - options: renders defaults; changing dark background persists (only `themes.dark` is
+    written; `themes.light` and `mode` untouched) and updates preview; per-theme reset restores
+    defaults; reset-all restores mode + both themes; hex input validation; failed write shows
+    "Not saved" (simulated by stubbing `chrome.storage.sync.set` to set `lastError`).
+  - migration: seed storage with legacy `{ mode: 'light' }`, open the popup (top frame) →
+    storage contains `settings` with `v: 2`, `mode: 'light'`, default themes, and the legacy
+    `mode` key is removed; exactly one write occurred (count via a `chrome.storage.onChanged`
+    listener registered before load).
+  - real-site smoke (skipped only when `E2E_SITE=0` or when navigation to the site fails —
+    assertion failures fail the job): open https://teams.scrumlaunch.com/time-tracker
+    unauthenticated (the app shell — sidebar, header, "session expired" page — renders on the
+    canvas without a login, which is what the pixel check needs); wait for
+    `html[data-sl-theme="dark"]` and for the canvas to be painted (poll until a sampled pixel
+    is no longer pure white), then assert body filter contains `url("#sl-matrix")` and that
+    the pixel 8 px inside the top-left corner of the content area matches the configured
+    background within ±12/255 (the site's own background is off-white, so an exact match is
+    not expected); set mode to `light` via storage → attribute removed and filter `none`.
+- CI runs lint + unit + e2e. No `continue-on-error`: the site spec skips itself on
+  connectivity failure; any assertion failure fails the job.
 
 ## Documentation
 
 - README: what it does, install from store / unpacked, usage, customization, how it works,
   limitations, development, license.
 - docs/DEVELOPMENT.md: layout, scripts, testing, release/packaging, versioning.
-- docs/PRIVACY.md: no data collected; settings stored in Chrome sync storage only.
+- docs/PRIVACY.md: no data collected; settings stored in Chrome sync storage only. Published
+  at a stable public URL (GitHub Pages from `docs/`, fallback: the GitHub blob permalink) —
+  the Web Store developer dashboard requires a privacy-policy **URL**, not a file.
 - docs/STORE_LISTING.md: store title, summary (≤132 chars), description, category, screenshots
-  list, single-purpose statement, permission justification (`storage`).
+  list, single-purpose statement, permission justification (`storage`), the privacy-policy
+  URL, and the answers for the dashboard's data-usage certification (no data collected /
+  no remote code / not selling data), so every submission field is ready to paste.
 - CHANGELOG.md (Keep a Changelog), starting with 1.0.0 and 2.0.0.
 
 ## Out of scope
