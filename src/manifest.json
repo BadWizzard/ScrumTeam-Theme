@@ -14,7 +14,15 @@
     {
       "matches": ["*://teams.scrumlaunch.com/*"],
       "css": ["content/theme.css"],
-      "js": ["lib/color.js", "lib/defaults.js", "lib/settings.js", "lib/theme-logic.js", "content/content.js"],
+      "js": [
+        "lib/color.js",
+        "lib/defaults.js",
+        "lib/settings.js",
+        "lib/theme-logic.js",
+        "lib/filter.js",
+        "lib/settings-store.js",
+        "content/content.js"
+      ],
       "run_at": "document_start",
       "all_frames": true
     }

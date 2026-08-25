@@ -53,4 +53,18 @@ module.exports = [
       },
     },
   },
+  {
+    // e2e specs: `page.evaluate(() => ...)` callbacks run inside the extension
+    // page, so `chrome`/`window`/the injected `SL` global are in scope there.
+    files: ['tests/e2e/**/*.spec.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+        ...globals.webextensions,
+        SL: 'readonly',
+      },
+    },
+  },
 ];
