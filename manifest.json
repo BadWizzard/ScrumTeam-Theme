@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "ScrumLaunch Teams — Dark Modern",
+  "version": "1.0.0",
+  "description": "Dark theme (Cursor / VS Code Dark Modern palette) for teams.scrumlaunch.com with a Dark / Light / System switch.",
+  "permissions": ["storage"],
+  "action": {
+    "default_title": "ScrumLaunch theme",
+    "default_popup": "popup.html",
+    "default_icon": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" }
+  },
+  "icons": { "16": "icons/icon16.png", "48": "icons/icon48.png", "128": "icons/icon128.png" },
+  "content_scripts": [
+    {
+      "matches": ["*://teams.scrumlaunch.com/*"],
+      "css": ["theme.css"],
+      "js": ["theme-logic.js", "content.js"],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ]
+}
