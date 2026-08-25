@@ -149,10 +149,12 @@ Helpers (in `lib/filter.js`, unit-tested): `compose(a, b)` (affine product), `in
   ```
   The image rule preserves v1 behaviour (real DOM images keep their original colors) under
   any user-chosen matrix. `color-mix()` requires Chrome 111 → `minimum_chrome_version` is
-  `"111"`.
+  `"111"`. (The shipped file is prettier-formatted — one declaration per line and
+  single-quoted attribute selectors, `html[data-sl-theme='dark']`; identical semantics.)
 - Verified during review round 1 (headless Chrome, four combinations): `url(#sl-matrix)`
   resolves as a same-document reference despite the page's `<base href="/">`. The site smoke
-  test still asserts it.
+  test still asserts it, and so does the offline `tests/e2e/content.spec.js`, whose fixture
+  page carries the same `<base href="/">`.
 
 ## UI
 
