@@ -22,5 +22,6 @@ test('clicking Light does not throw and persists mode to chrome.storage.sync', a
   expect(errors).toEqual([]);
 
   const stored = await storage.get(page);
-  expect(stored.mode).toBe('light');
+  expect(stored.settings.mode).toBe('light');
+  expect(stored.mode).toBeUndefined();
 });

@@ -1,18 +1,45 @@
 (function () {
-  const { DEFAULT_MODE, MODES } = self.SLTheme;
-  const buttons = [...document.querySelectorAll('.modes button')];
+  const { MODES } = SL.defaults;
+  const buttons = [...document.querySelectorAll('.modes button[data-mode]')];
+  const status = document.getElementById('status');
+  const openOptions = document.getElementById('open-options');
 
-  function render(mode) {
-    for (const b of buttons) b.setAttribute('aria-checked', String(b.dataset.mode === mode));
+  let current = null;
+
+  function render(settings) {
+    current = settings;
+    for (const b of buttons) {
+      b.setAttribute('aria-checked', String(b.dataset.mode === settings.mode));
+    }
   }
 
-  chrome.storage.sync.get({ mode: DEFAULT_MODE }, (items) => render(items.mode));
+  function clearStatus() {
+    status.textContent = '';
+    delete status.dataset.state;
+  }
+
+  SL.store.load().then(render);
 
   for (const b of buttons) {
     b.addEventListener('click', () => {
       const mode = b.dataset.mode;
       if (!MODES.includes(mode)) return;
-      chrome.storage.sync.set({ mode }, () => render(mode));
+      const previous = current;
+      SL.store
+        .save({ mode })
+        .then((settings) => {
+          clearStatus();
+          render(settings);
+        })
+        .catch((err) => {
+          status.textContent = 'Not saved — ' + err.message;
+          status.dataset.state = 'error';
+          render(previous);
+        });
     });
   }
+
+  openOptions.addEventListener('click', () => {
+    chrome.runtime.openOptionsPage();
+  });
 })();
