@@ -7,7 +7,7 @@
     (typeof require === 'function' && require('./defaults.js'));
 
   const { isHex } = color;
-  const { MODES, DEFAULT_MODE, DEFAULT_THEMES } = defaults;
+  const { MODES, DEFAULT_MODE, DEFAULT_THEMES, RANGE } = defaults;
 
   function clamp(n, min, max) {
     return Math.min(max, Math.max(min, n));
@@ -27,7 +27,7 @@
       isHex(src[field]) ? src[field].toLowerCase() : defaultTheme[field];
     const normalizeNumber = (field) => {
       const n = Number(src[field]);
-      return Number.isFinite(n) ? clamp(n, 50, 150) : 100;
+      return Number.isFinite(n) ? clamp(n, RANGE.min, RANGE.max) : 100;
     };
     const keepColors = src.keepColors == null ? defaultTheme.keepColors : Boolean(src.keepColors);
 

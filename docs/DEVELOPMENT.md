@@ -23,8 +23,9 @@ src/
 
 tests/
   unit/*.test.js                    node:test, run with `npm run test:unit`
-  e2e/fixtures/extension.js         Playwright fixture: launches Chromium with src/ loaded unpacked
-  e2e/*.spec.js                     popup, options, migration, fixture (offline) + site (network, opt-in)
+  e2e/fixtures/extension.js         Playwright fixture: launches Chromium with src/ loaded unpacked;
+                                    extPage/openSettled, storage/seed helpers, installFailingSet
+  e2e/*.spec.js                     popup, options, content, migration, fixture (offline) + site (network, opt-in)
 
 scripts/
   package.sh                        zips src/ into dist/dark-modern-for-scrumlaunch-teams-<version>.zip
@@ -51,7 +52,7 @@ eslint.config.js, .prettierrc, playwright.config.js
 
 | Script | Command | What it does |
 |---|---|---|
-| `lint` | `eslint .` | Lints the whole repo. |
+| `lint` | `eslint . && prettier --check .` | Lints the whole repo and fails if anything is unformatted. |
 | `format` | `prettier -w .` | Formats the whole repo. |
 | `test:unit` | `node --test tests/unit/` | Runs the pure-logic unit tests (no browser). |
 | `test:e2e` | `playwright test` | Runs the offline Playwright suite (`tests/e2e/`); `site.spec.js` self-skips unless `E2E_SITE=1`. |
@@ -73,10 +74,14 @@ eslint.config.js, .prettierrc, playwright.config.js
 - **Offline e2e** (`npm run test:e2e`, Playwright + Chromium with the unpacked
   extension, no network): popup, options and migration behavior — see the
   spec files in `tests/e2e/` for the exact assertions (default selections,
-  field-level writes that never clobber the other theme or a concurrent edit,
-  invalid-hex handling, low-contrast hints, failed-save error states,
-  exactly-once v1→v2 migration). This is what `ci.yml` runs on every push and
-  pull request, and it must stay green with no network access.
+  field-level writes that never clobber the *other* theme, serialized saves
+  within a page, invalid-hex handling, low-contrast hints, failed-save error
+  states, exactly-once v1→v2 migration). `content.spec.js` covers the content
+  script offline by serving the site's URL from an in-memory fixture with
+  `context.route` — Chrome injects the content script because the URL matches,
+  so the top-frame/sub-frame behaviour is testable without network. This is
+  what `ci.yml` runs on every push and pull request, and it must stay green
+  with no network access.
 - **Real-site smoke** (`npm run test:site`, i.e. `E2E_SITE=1 playwright test
   tests/e2e/site.spec.js`): opens the real `teams.scrumlaunch.com/time-tracker`
   unauthenticated and asserts the composed matrix actually recolors sampled
@@ -113,7 +118,7 @@ module `node:test` can `require()` directly:
   const api = { ... };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else { root.SL = root.SL || {}; root.SL.thisModule = api; }
-})(typeof self !== 'undefined' ? self : globalThis);
+})(typeof self !== 'undefined' ? self : this);
 ```
 
 In the browser, every library attaches itself under the shared `self.SL`
@@ -153,15 +158,16 @@ turns any stored value — including a legacy version-1 value that was just
 `{ mode }` with no `v` at all — into a valid v2 object, so every reader works
 without an explicit migration step. `settings-store.js`'s `load()`
 additionally writes the normalized v2 object back to storage, but only when
-the stored value was not already v2 **and** the caller is the top frame
-(`window === window.top`), since the content script runs in every frame of
-every tab and `chrome.storage.sync` has write quotas (120 ops/min, 1800/hour)
-that a naive per-frame write-back would blow through. The write-back drops the
-legacy top-level `mode` key.
+there **is** stored data that is not already v2 **and** the caller is the top
+frame (`window === window.top`), since the content script runs in every frame
+of every tab and `chrome.storage.sync` has write quotas (120 ops/min,
+1800/hour) that a naive per-frame write-back would blow through. A profile
+with nothing stored writes nothing at all on load — there is nothing to
+migrate. The write-back drops the legacy top-level `mode` key.
 
 ## Release checklist
 
-1. `npm test` green; `npm run package` produces the zip; load the zip unpacked
+1. `npm run lint && npm test` green; `npm run package` produces the zip; load the zip unpacked
    and click through popup + options.
 2. **Performance checkpoint:** on the real site, record a DevTools Performance
    trace of scrolling the time-tracker list for ~5 s with mode `dark` and

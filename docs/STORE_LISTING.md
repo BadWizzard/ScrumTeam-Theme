@@ -157,3 +157,17 @@ a public URL. None is chosen yet.
 
 Whichever is chosen, update this section with the verified, live URL and
 also update the placeholder in `docs/PRIVACY.md`.
+
+## `homepage_url` (removed from the manifest)
+
+`src/manifest.json` used to carry
+`"homepage_url": "https://github.com/BadWizzard/ScrumTeam-Theme"`. That
+repository is private, so the link was a 404 for every store visitor and
+reviewer; it has been **removed** rather than shipped broken (an absent
+`homepage_url` is valid — the store simply shows no website link).
+
+**Re-add `homepage_url` once a public URL exists** — whichever option above is
+chosen produces one, and `tests/unit/manifest.test.js` already allows any
+public `https://` value that is not the private repo. The same two links to
+the private repo in `site/index.md` and `site/privacy.md` need the same
+update before those pages are published.

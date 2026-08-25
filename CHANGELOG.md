@@ -18,9 +18,10 @@ this project's versioning follows the extension's `src/manifest.json`
   saturation into one matrix, plus its exact mathematical inverse applied to
   real DOM images/video so they keep their original colors.
 - Settings schema v2 (`{ v: 2, mode, themes: { dark, light } }`) with
-  automatic migration from the v1 `{ mode }` shape; field-level merge on
-  save so concurrent edits on different surfaces (popup vs. options) or
-  devices never clobber each other.
+  automatic migration from the v1 `{ mode }` shape. Saves within one page are
+  serialized, and the write itself is a field-level merge, so an edit on one
+  surface (popup vs. options) or device cannot clobber a *different* field
+  edited on another; the same field is last-write-wins.
 - A gear button in the popup that opens the new options page.
 - Store-readiness: `_locales/en` manifest metadata, extension icons,
   `scripts/package.sh` and `scripts/screenshots.spec.js`, GitHub Actions CI

@@ -22,7 +22,6 @@
   const api = { MODES, DEFAULT_MODE, resolveTheme };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else {
-    root.SLTheme = api;
     root.SL = root.SL || {};
     root.SL.theme = api;
   }

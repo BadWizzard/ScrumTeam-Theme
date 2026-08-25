@@ -51,9 +51,11 @@ and `inverseCss` is `'none'`; the options page shows a readability hint for such
 site untouched.
 
 `buildFilter(theme, filterId = 'sl-matrix')` returns
-`{ css, inverseCss, matrix: number[20], inverseMatrix: number[20], inverted }` and is a pure
-function: `css` is `url("#<filterId>")` or `'none'`; `inverseCss` is
-`url("#<filterId>-inverse")` or `'none'`. `filterId` lets the options-page preview use its
+`{ css, inverseCss, matrix: number[20], inverseMatrix: number[20], inverted, background }` and
+is a pure function: `css` is `url("#<filterId>")` or `'none'`; `inverseCss` is
+`url("#<filterId>-inverse")` or `'none'`; `background` is the **rendered** background —
+`M([1,1,1])` clamped to the gamut and formatted as `#rrggbb` — which equals
+`theme.background` only when contrast and saturation are both 100. `filterId` lets the options-page preview use its
 own ids (`sl-matrix-dark`, `sl-matrix-light`) without rewriting strings.
 
 Helpers (in `lib/filter.js`, unit-tested): `compose(a, b)` (affine product), `invert(a)`
@@ -84,17 +86,24 @@ Helpers (in `lib/filter.js`, unit-tested): `compose(a, b)` (affine product), `in
 - Migration: v1 stored `{ mode }` at the top level. `normalizeSettings` accepts
   `{ mode }` (no `v`) and produces v2. Every reader normalizes, so the app works without an
   explicit migration. Additionally, `load()` writes the normalized v2 object back **only when
-  the stored value was not already v2 and the caller is the top frame**
+  there is stored data that is not already v2, and the caller is the top frame**
   (`window === window.top`) — the content script runs in every frame of every tab, and
   `chrome.storage.sync` has write quotas (120 ops/min, 1800/hour), so sub-frames must not
-  each issue the same write. The write-back removes the legacy top-level `mode` key.
+  each issue the same write. A profile with nothing stored at all has nothing to migrate and
+  performs **zero** writes on load: every reader normalizes anyway, so writing the defaults
+  back would be pure quota cost (and would race any concurrent writer). The write-back
+  removes the legacy top-level `mode` key.
 - `settings-store.js`: `load() → Promise<settings>`, `save(patch) → Promise<settings>`,
   `onChange(cb)`, and the pure `merge(base, patch)` (unit-tested).
   `save(patch)` **re-reads storage, deep-merges the patch** (`mode`, and `themes.dark` /
   `themes.light` merged per field), normalizes, writes, and resolves with the result. The
   popup therefore writes only `{ mode }`, and the options page writes only the theme it
-  changed (`{ themes: { dark: {...} } }`), so a stale snapshot on one surface or device can
-  never clobber changes made on another (last-write-wins on the *field*, not the object).
+  changed (`{ themes: { dark: {...} } }`). Within one page, saves are **serialized** through
+  a promise chain, so a second save always re-reads after the first has been written — read-
+  modify-write can't drop a patch. Across pages and devices there is no shared chain: the
+  merge is field-level, so a stale snapshot cannot clobber a *different* field, but the same
+  field is last-write-wins. True cross-context atomicity would need a background worker and
+  is out of scope.
   `save` rejects when `chrome.runtime.lastError` is set; **every caller surfaces that**
   (popup and options both show a "Not saved" status).
 
@@ -113,7 +122,10 @@ Helpers (in `lib/filter.js`, unit-tested): `compose(a, b)` (affine product), `in
     `<feColorMatrix type="matrix">`. It returns `{ fwd, inv }` (the two `feColorMatrix`
     nodes) on both the create path and the already-present path.
   - Set `fwd.values` = matrix, `inv.values` = inverseMatrix, `--sl-filter` = css,
-    `--sl-filter-inverse` = inverseCss, `--sl-bg` = theme background,
+    `--sl-filter-inverse` = inverseCss, `--sl-bg` = `buildFilter`'s `background` (the
+    **rendered** background, i.e. `M(white)` — the `<html>` background and the scrollbars
+    sit outside the filtered subtree, so using the raw `theme.background` would leave a
+    visible seam whenever contrast or saturation is not 100),
     `html[data-sl-theme]` = `'dark'` if inverted else `'light'`.
 - Re-applies on `chrome.storage.onChanged` (key `settings`) and on
   `matchMedia('(prefers-color-scheme: dark)')` change.

@@ -14,7 +14,7 @@ test('applies the composed matrix to the real site', async ({ context, extPage }
   expect(await page.evaluate(() => getComputedStyle(document.body).filter)).toContain('url("#sl-matrix")');
   const sample = async () => { const box = await page.locator('canvas').first().boundingBox();
     const png = await page.screenshot({ clip: { x: box.x + 8, y: box.y + 8, width: 1, height: 1 } });
-    return require('pngjs').PNG.sync.read(png).data.slice(0, 3); };            // add pngjs devDep
+    return require('pngjs').PNG.sync.read(png).data.slice(0, 3); };
   await expect.poll(async () => { const [r, g, b] = await sample(); return r === 255 && g === 255 && b === 255; }, { timeout: 20_000 }).toBe(false);
   const p1 = await sample();
   await ctl.evaluate(() => SL.store.save({ mode: 'light' }));

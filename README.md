@@ -4,8 +4,9 @@ A Chrome extension that applies a customizable dark (or light) color theme to
 **https://teams.scrumlaunch.com**, with per-theme color, contrast and saturation
 controls and a Dark / Light / System switch.
 
-Not affiliated with or endorsed by ScrumLaunch. See `docs/STORE_LISTING.md` for
-the store listing's affiliation position.
+Not affiliated with or endorsed by ScrumLaunch (pending confirmation — the
+listing's affiliation position is still an open decision; see
+`docs/STORE_LISTING.md`).
 
 ## Screenshots
 
