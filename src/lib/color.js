@@ -41,11 +41,11 @@
   /**
    * Calculate WCAG relative luminance of a hex color.
    * @param {string} hexColor - Hex color like '#ffffff'
-   * @returns {number} - Luminance 0..1
+   * @returns {number | null} - Luminance 0..1, or null if invalid
    */
   function luminance(hexColor) {
     const rgb = parseHex(hexColor);
-    if (!rgb) return 0;
+    if (!rgb) return null;
 
     // Normalize to 0..1
     const r = rgb.r / 255;
@@ -66,11 +66,12 @@
    * Calculate contrast ratio between two hex colors.
    * @param {string} hexA - First hex color
    * @param {string} hexB - Second hex color
-   * @returns {number} - Contrast ratio ≥ 1
+   * @returns {number | null} - Contrast ratio ≥ 1, or null if either color is invalid
    */
   function contrastRatio(hexA, hexB) {
     const lA = luminance(hexA);
     const lB = luminance(hexB);
+    if (lA === null || lB === null) return null;
     const lMax = Math.max(lA, lB);
     const lMin = Math.min(lA, lB);
     return (lMax + 0.05) / (lMin + 0.05);

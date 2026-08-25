@@ -10,8 +10,14 @@ test('isHex only accepts strict #rrggbb', () => { assert.equal(isHex('#0078D4'),
 test('luminance: white 1, black 0, #1f1f1f dark', () => {
   assert.equal(luminance('#ffffff'), 1); assert.equal(luminance('#000000'), 0); assert.ok(luminance('#1f1f1f') < 0.02);
 });
+test('luminance returns null for invalid input', () => {
+  assert.equal(luminance('#fff'), null); assert.equal(luminance(undefined), null);
+});
 test('contrastRatio: white/black 21, same color 1, dark modern ≈ 10.26', () => {
   assert.equal(Math.round(contrastRatio('#ffffff', '#000000')), 21);
   assert.equal(contrastRatio('#1f1f1f', '#1f1f1f'), 1);
   assert.ok(Math.abs(contrastRatio('#1f1f1f', '#cccccc') - 10.26) < 0.05);
+});
+test('contrastRatio returns null for invalid input', () => {
+  assert.equal(contrastRatio('zzz', '#ffffff'), null);
 });
