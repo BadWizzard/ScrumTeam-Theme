@@ -230,3 +230,49 @@ test('an in-progress invalid hex on one card survives the other card saving', as
   await expect(lightHex).toHaveValue('zzz');
   await expect(lightHex).toHaveAttribute('aria-invalid', 'true');
 });
+
+test('resetting a theme wins over a leftover debounced save from before the reset', async ({
+  extPage,
+}) => {
+  const page = await extPage('options/options.html');
+  await expect.poll(() => storage.get(page)).toMatchObject({ settings: { v: 2 } });
+
+  // No wait between the edit and the reset click: the edit's debounced save
+  // (fires ~400ms later) must not overwrite the reset that happened first.
+  await darkBgHex(page).fill('#101820');
+  await page.locator('section[data-theme="dark"] button.reset-theme').click();
+
+  await expect
+    .poll(async () => (await storage.get(page)).settings.themes.dark.background, {
+      timeout: 1500,
+    })
+    .toBe(DEFAULT_THEMES.dark.background);
+
+  // Wait well past the debounce window to make sure the leftover save
+  // doesn't land late and silently undo the reset.
+  await page.waitForTimeout(600);
+
+  const stored = await storage.get(page);
+  expect(stored.settings.themes.dark.background).toBe(DEFAULT_THEMES.dark.background);
+  await expect(darkBgHex(page)).toHaveValue(DEFAULT_THEMES.dark.background);
+});
+
+test('reset-all wins over a leftover debounced save from before the reset', async ({ extPage }) => {
+  const page = await extPage('options/options.html');
+  await expect.poll(() => storage.get(page)).toMatchObject({ settings: { v: 2 } });
+
+  await lightBgHex(page).fill('#f5efe0');
+  await page.locator('#reset-all').click();
+
+  await expect
+    .poll(async () => (await storage.get(page)).settings.themes.light.background, {
+      timeout: 1500,
+    })
+    .toBe(DEFAULT_THEMES.light.background);
+
+  await page.waitForTimeout(600);
+
+  const stored = await storage.get(page);
+  expect(stored.settings.themes.light.background).toBe(DEFAULT_THEMES.light.background);
+  await expect(lightBgHex(page)).toHaveValue(DEFAULT_THEMES.light.background);
+});

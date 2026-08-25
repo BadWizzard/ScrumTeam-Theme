@@ -20,6 +20,13 @@
   // a late read of `state[name]` that something else may have touched.
   const pendingTheme = {};
   const savesInFlight = { dark: 0, light: 0 };
+  // Bumped on every commit() and every reset for that card. A scheduled or
+  // in-flight save captures the generation it was started under; when it
+  // finally settles, it only applies its result if that generation is still
+  // current. This is what lets a reset — which cannot cancel a save that has
+  // already left for chrome.storage.sync — win over a save that started
+  // before it and resolves after it.
+  const generation = { dark: 0, light: 0 };
   // Last known-good theme per card. Read/written instead of the DOM so an
   // in-progress invalid hex edit never leaks into a save or a preview.
   const state = {};
@@ -54,6 +61,14 @@
     else delete status.dataset.state;
   }
 
+  // True while a card has an invalid hex string sitting uncommitted in an
+  // input (typing it never calls commit(), so it isn't reflected in
+  // saveTimers/savesInFlight/generation at all).
+  function hasInvalidHex(name) {
+    const e = cards[name];
+    return e.bgHex.getAttribute('aria-invalid') === 'true' || e.textHex.getAttribute('aria-invalid') === 'true';
+  }
+
   // True while a card has local state that hasn't (yet) been fully
   // reconciled with storage: a debounced save waiting to fire, a save
   // in flight, or an invalid hex string sitting uncommitted in an input.
@@ -61,13 +76,16 @@
   // never clobbers an edit the user is still mid-typing on another card's
   // save landing, or wipes an aria-invalid hex back to the stored value.
   function isPending(name) {
-    const e = cards[name];
-    return (
-      !!saveTimers[name] ||
-      savesInFlight[name] > 0 ||
-      e.bgHex.getAttribute('aria-invalid') === 'true' ||
-      e.textHex.getAttribute('aria-invalid') === 'true'
-    );
+    return !!saveTimers[name] || savesInFlight[name] > 0 || hasInvalidHex(name);
+  }
+
+  // Cancels a scheduled debounced save for a card. Does NOT cancel a save
+  // that already left for chrome.storage.sync (that can't be undone from
+  // here) — the generation counter handles that case instead.
+  function cancelPending(name) {
+    clearTimeout(saveTimers[name]);
+    saveTimers[name] = null;
+    pendingTheme[name] = null;
   }
 
   function updateHint(name, theme) {
@@ -95,15 +113,35 @@
     // Snapshot now: this is exactly what gets written when the debounce
     // fires, even if state[name] is later touched by something else.
     pendingTheme[name] = { ...state[name] };
+    const myGeneration = generation[name];
     clearTimeout(saveTimers[name]);
     saveTimers[name] = setTimeout(() => {
+      // A newer edit or a reset superseded this save before it even left —
+      // normally clearTimeout already prevents this callback from running,
+      // this is a defensive backstop.
+      if (generation[name] !== myGeneration) return;
       saveTimers[name] = null;
       const theme = pendingTheme[name];
       savesInFlight[name]++;
       store
         .save({ themes: { [name]: theme } })
-        .then(() => setStatus('Saved'))
-        .catch((err) => setStatus('Not saved — ' + err.message, 'error'))
+        .then((saved) => {
+          // Superseded while the save was in flight (e.g. a reset landed
+          // after this save had already left for chrome.storage.sync):
+          // don't report success or resurrect the value it just wrote.
+          if (generation[name] !== myGeneration) return;
+          setStatus('Saved');
+          // Apply the resolved (normalized) value directly, rather than
+          // waiting on SL.store.onChange to come back around — but never
+          // clobber a hex the user is mid-typing an invalid value into.
+          if (hasInvalidHex(name)) return;
+          state[name] = normalizeTheme(saved.themes[name], DEFAULT_THEMES[name]);
+          renderCard(name, state[name]);
+        })
+        .catch((err) => {
+          if (generation[name] !== myGeneration) return;
+          setStatus('Not saved — ' + err.message, 'error');
+        })
         .finally(() => {
           savesInFlight[name]--;
         });
@@ -113,6 +151,7 @@
   function commit(name, patch) {
     state[name] = { ...state[name], ...patch };
     updatePreview(name, state[name]);
+    generation[name]++;
     scheduleSave(name);
   }
 
@@ -148,9 +187,9 @@
     }
   }
 
-  // Render triggered by SL.store.onChange (our own saves landing, or a
-  // change from another tab/the popup): skip any card that still has
-  // pending local edits so it never gets clobbered mid-flight.
+  // Render triggered by SL.store.onChange (a change from another tab/the
+  // popup, or — belt and braces — our own saves landing): skip any card
+  // that still has pending local edits so it never gets clobbered mid-flight.
   function renderFromChange(settings) {
     for (const name of NAMES) {
       if (isPending(name)) continue;
@@ -205,6 +244,8 @@
     bindCheckbox(name, 'keepColors', e.keepColors);
 
     e.resetTheme.addEventListener('click', () => {
+      cancelPending(name);
+      generation[name]++;
       store
         .save({ themes: { [name]: DEFAULT_THEMES[name] } })
         .then((settings) => {
@@ -218,6 +259,10 @@
   for (const name of NAMES) bindCard(name);
 
   document.getElementById('reset-all').addEventListener('click', () => {
+    for (const name of NAMES) {
+      cancelPending(name);
+      generation[name]++;
+    }
     store
       .save(DEFAULT_SETTINGS)
       .then((settings) => {
