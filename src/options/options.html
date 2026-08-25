@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Dark Modern for ScrumLaunch Teams — Options</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Dark Modern for ScrumLaunch Teams</h1>
+      <p>
+        teams.scrumlaunch.com renders its UI on a single canvas, so colors can't be changed element
+        by element — instead the whole page goes through one color transform (white maps to your
+        background color, black maps to your text color).
+      </p>
+    </header>
+
+    <main class="cards">
+      <section class="card" data-theme="dark">
+        <h2>Dark theme</h2>
+
+        <div class="field">
+          <label for="dark-background-hex">Background</label>
+          <div class="color-input">
+            <input
+              type="color"
+              id="dark-background-color"
+              data-field="background"
+              aria-label="Dark background color picker"
+            />
+            <input
+              type="text"
+              id="dark-background-hex"
+              data-field="background"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="dark-text-hex">Text</label>
+          <div class="color-input">
+            <input
+              type="color"
+              id="dark-text-color"
+              data-field="text"
+              aria-label="Dark text color picker"
+            />
+            <input
+              type="text"
+              id="dark-text-hex"
+              data-field="text"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+        </div>
+
+        <p class="hint readability" aria-live="polite"></p>
+
+        <div class="field">
+          <label for="dark-contrast">Contrast</label>
+          <div class="range-input">
+            <input
+              type="range"
+              id="dark-contrast"
+              data-field="contrast"
+              min="50"
+              max="150"
+              step="5"
+            />
+            <output for="dark-contrast">100</output>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="dark-saturation">Saturation</label>
+          <div class="range-input">
+            <input
+              type="range"
+              id="dark-saturation"
+              data-field="saturation"
+              min="50"
+              max="150"
+              step="5"
+            />
+            <output for="dark-saturation">100</output>
+          </div>
+        </div>
+
+        <div class="field checkbox-field">
+          <input type="checkbox" id="dark-keepColors" data-field="keepColors" />
+          <label for="dark-keepColors">Keep original colors</label>
+          <span class="hint-static">only affects dark themes</span>
+        </div>
+
+        <div class="preview">
+          <svg aria-hidden="true" class="preview-svg">
+            <filter id="sl-matrix-dark" color-interpolation-filters="sRGB">
+              <feColorMatrix type="matrix" />
+            </filter>
+            <filter id="sl-matrix-dark-inverse" color-interpolation-filters="sRGB">
+              <feColorMatrix type="matrix" />
+            </filter>
+          </svg>
+          <div class="preview-content">
+            <div class="preview-appbar">teams.scrumlaunch.com</div>
+            <h3>Time tracker</h3>
+            <p>Track hours across projects and see weekly totals at a glance.</p>
+            <button type="button" class="preview-primary">Log time</button>
+            <a href="#" class="preview-link">View report</a>
+            <span class="preview-badge">Overdue</span>
+            <img
+              class="preview-image"
+              width="24"
+              height="24"
+              alt=""
+              src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><rect width='24' height='24' fill='%23ff9800'/></svg>"
+            />
+          </div>
+        </div>
+
+        <button type="button" class="reset-theme">Reset dark theme to default</button>
+      </section>
+
+      <section class="card" data-theme="light">
+        <h2>Light theme</h2>
+
+        <div class="field">
+          <label for="light-background-hex">Background</label>
+          <div class="color-input">
+            <input
+              type="color"
+              id="light-background-color"
+              data-field="background"
+              aria-label="Light background color picker"
+            />
+            <input
+              type="text"
+              id="light-background-hex"
+              data-field="background"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="light-text-hex">Text</label>
+          <div class="color-input">
+            <input
+              type="color"
+              id="light-text-color"
+              data-field="text"
+              aria-label="Light text color picker"
+            />
+            <input
+              type="text"
+              id="light-text-hex"
+              data-field="text"
+              autocomplete="off"
+              spellcheck="false"
+            />
+          </div>
+        </div>
+
+        <p class="hint readability" aria-live="polite"></p>
+
+        <div class="field">
+          <label for="light-contrast">Contrast</label>
+          <div class="range-input">
+            <input
+              type="range"
+              id="light-contrast"
+              data-field="contrast"
+              min="50"
+              max="150"
+              step="5"
+            />
+            <output for="light-contrast">100</output>
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="light-saturation">Saturation</label>
+          <div class="range-input">
+            <input
+              type="range"
+              id="light-saturation"
+              data-field="saturation"
+              min="50"
+              max="150"
+              step="5"
+            />
+            <output for="light-saturation">100</output>
+          </div>
+        </div>
+
+        <div class="field checkbox-field">
+          <input type="checkbox" id="light-keepColors" data-field="keepColors" />
+          <label for="light-keepColors">Keep original colors</label>
+          <span class="hint-static">only affects dark themes</span>
+        </div>
+
+        <div class="preview">
+          <svg aria-hidden="true" class="preview-svg">
+            <filter id="sl-matrix-light" color-interpolation-filters="sRGB">
+              <feColorMatrix type="matrix" />
+            </filter>
+            <filter id="sl-matrix-light-inverse" color-interpolation-filters="sRGB">
+              <feColorMatrix type="matrix" />
+            </filter>
+          </svg>
+          <div class="preview-content">
+            <div class="preview-appbar">teams.scrumlaunch.com</div>
+            <h3>Time tracker</h3>
+            <p>Track hours across projects and see weekly totals at a glance.</p>
+            <button type="button" class="preview-primary">Log time</button>
+            <a href="#" class="preview-link">View report</a>
+            <span class="preview-badge">Overdue</span>
+            <img
+              class="preview-image"
+              width="24"
+              height="24"
+              alt=""
+              src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24'><rect width='24' height='24' fill='%23ff9800'/></svg>"
+            />
+          </div>
+        </div>
+
+        <button type="button" class="reset-theme">Reset light theme to default</button>
+      </section>
+    </main>
+
+    <footer>
+      <button type="button" id="reset-all">Reset all to defaults</button>
+      <span id="status" aria-live="polite"></span>
+    </footer>
+
+    <script src="../lib/color.js"></script>
+    <script src="../lib/defaults.js"></script>
+    <script src="../lib/settings.js"></script>
+    <script src="../lib/theme-logic.js"></script>
+    <script src="../lib/filter.js"></script>
+    <script src="../lib/settings-store.js"></script>
+    <script src="options.js"></script>
+  </body>
+</html>

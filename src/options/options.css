@@ -1,0 +1,264 @@
+:root {
+  --bg: #1f1f1f;
+  --panel: #181818;
+  --input: #313131;
+  --border: #2b2b2b;
+  --text: #cccccc;
+  --muted: #9d9d9d;
+  --accent: #0078d4;
+  --accent-hover: #026ec1;
+  --error: #f14c4c;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font:
+    14px/1.5 system-ui,
+    -apple-system,
+    'Segoe UI',
+    Ubuntu,
+    sans-serif;
+}
+
+header {
+  padding: 24px 32px;
+  border-bottom: 1px solid var(--border);
+  background: var(--panel);
+}
+header h1 {
+  margin: 0 0 8px;
+  font-size: 20px;
+}
+header p {
+  margin: 0;
+  max-width: 68ch;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+main.cards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  padding: 24px 32px;
+}
+
+@media (min-width: 900px) {
+  main.cards {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 20px;
+}
+.card h2 {
+  margin: 0 0 16px;
+  font-size: 15px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 14px;
+}
+.field label {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.color-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.color-input input[type='color'] {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--input);
+  cursor: pointer;
+}
+.color-input input[type='text'] {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--input);
+  color: var(--text);
+  font: inherit;
+}
+.color-input input[type='text'][aria-invalid='true'] {
+  border-color: var(--error);
+}
+
+.range-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.range-input input[type='range'] {
+  flex: 1;
+  accent-color: var(--accent);
+}
+.range-input output {
+  min-width: 3ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.checkbox-field {
+  flex-direction: row;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.checkbox-field label {
+  color: var(--text);
+  font-size: 13px;
+}
+.checkbox-field .hint-static {
+  font-size: 11px;
+  color: var(--muted);
+  flex-basis: 100%;
+}
+
+.hint.readability {
+  min-height: 1.2em;
+  margin: 0 0 14px;
+  font-size: 12px;
+  color: var(--error);
+}
+
+/* Height is content-driven (min-height only keeps short previews from looking
+   cramped): the preview must show every sample element — app bar, heading,
+   paragraph, button, link, badge and image — because the badge and the image
+   are what demonstrate keepColors and the inverse matrix. A fixed height used
+   to clip the last three. overflow:hidden stays so the full-bleed app bar is
+   cropped by the rounded corners. */
+.preview {
+  position: relative;
+  width: 100%;
+  min-height: 140px;
+  overflow: hidden;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  margin-bottom: 14px;
+  background: #ffffff;
+  color: #000000;
+}
+.preview-svg {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
+/* A wrapping row: the app bar, heading and paragraph each take a full row;
+   the button, link, badge and image share the last row(s). */
+.preview-content {
+  padding: 10px 12px;
+  font-size: 12px;
+  display: flex;
+  flex-flow: row wrap;
+  align-items: center;
+  gap: 8px 10px;
+}
+.preview-appbar {
+  width: calc(100% + 24px);
+  margin: -10px -12px 4px;
+  padding: 6px 12px;
+  background: #eeeeee;
+  font-weight: 600;
+}
+.preview-content h3 {
+  width: 100%;
+  margin: 0;
+  font-size: 14px;
+}
+.preview-content p {
+  width: 100%;
+  margin: 0;
+}
+.preview-primary {
+  border: none;
+  border-radius: 4px;
+  padding: 4px 10px;
+  background: #0078d4;
+  color: #ffffff;
+  font: inherit;
+}
+.preview-link {
+  color: #0078d4;
+}
+.preview-badge {
+  border-radius: 10px;
+  padding: 1px 8px;
+  background: #ff9800;
+  color: #ffffff;
+  font-size: 11px;
+}
+.preview-image {
+  display: block;
+}
+
+.reset-theme {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--input);
+  color: var(--text);
+  padding: 6px 12px;
+  font: inherit;
+  cursor: pointer;
+}
+.reset-theme:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
+footer {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 20px 32px;
+  border-top: 1px solid var(--border);
+}
+#reset-all {
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--input);
+  color: var(--text);
+  padding: 8px 14px;
+  font: inherit;
+  cursor: pointer;
+}
+#reset-all:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+#status {
+  font-size: 12px;
+  color: var(--muted);
+}
+#status[data-state='error'] {
+  color: var(--error);
+}
+
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}

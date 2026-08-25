@@ -1,0 +1,48 @@
+/*
+ * Theme for teams.scrumlaunch.com (Flutter Web, CanvasKit renderer).
+ *
+ * The UI is painted into a single <canvas>, so per-element CSS can't recolor it.
+ * Instead content.js composes one feColorMatrix filter (SL.filter.buildFilter) from
+ * the user's chosen background/text/contrast/saturation and applies it to <body> via
+ * the --sl-filter custom property; real DOM images/video get the exact inverse via
+ * --sl-filter-inverse so they keep their original colors. See
+ * docs/superpowers/specs/2026-08-24-theme-customization-and-store-readiness-design.md
+ * ("Content script" section) for the full contract.
+ *
+ * Everything is scoped to html[data-sl-theme], set by content.js. The identity
+ * light default (css === 'none') removes the attribute entirely and the site is
+ * left untouched.
+ */
+
+html[data-sl-theme] {
+  background: var(--sl-bg) !important;
+}
+html[data-sl-theme='dark'] {
+  color-scheme: dark;
+}
+html[data-sl-theme] body {
+  filter: var(--sl-filter);
+  min-height: 100vh;
+}
+html[data-sl-theme] body :is(img, video, picture, [style*='background-image']) {
+  filter: var(--sl-filter-inverse);
+}
+html[data-sl-theme] #splash img {
+  filter: none;
+} /* splash ships its own dark variant */
+/* scrollbars live on <html>, outside the filtered subtree: derive from the theme */
+html[data-sl-theme='dark'] ::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+html[data-sl-theme='dark'] ::-webkit-scrollbar-track {
+  background: var(--sl-bg);
+}
+html[data-sl-theme='dark'] ::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--sl-bg), #ffffff 18%);
+  border: 3px solid var(--sl-bg);
+  border-radius: 6px;
+}
+html[data-sl-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--sl-bg), #ffffff 26%);
+}

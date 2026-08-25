@@ -1,0 +1,24 @@
+{
+  "name": "dark-modern-for-scrumlaunch-teams",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Dark theme with customizable colors for teams.scrumlaunch.com. Dark / Light / System switch.",
+  "scripts": {
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier -w .",
+    "test:unit": "node --test tests/unit/",
+    "test:e2e": "playwright test",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:site": "E2E_SITE=1 playwright test tests/e2e/site.spec.js",
+    "package": "scripts/package.sh",
+    "screenshots": "playwright test --config=scripts/screenshots.config.js"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.5",
+    "@playwright/test": "1.56.1",
+    "eslint": "^9.0.0",
+    "globals": "^15.0.0",
+    "pngjs": "^7.0.0",
+    "prettier": "^3.0.0"
+  }
+}

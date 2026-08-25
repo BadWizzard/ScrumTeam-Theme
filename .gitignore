@@ -1,6 +1,8 @@
 node_modules/
 dist/
+store/
 .playwright-profile/
 test-results/
 playwright-report/
 *.log
+.superpowers/
