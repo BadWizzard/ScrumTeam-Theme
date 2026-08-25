@@ -31,7 +31,8 @@ module.exports = [
     },
   },
   {
-    // Playwright fixture: CommonJS helpers whose callbacks run inside the extension page (chrome.*).
+    // Playwright fixture: CommonJS helpers whose callbacks run inside the
+    // extension page (chrome.*, window.*).
     files: ['tests/e2e/fixtures/**/*.js'],
     rules: {
       'no-empty-pattern': 'off',
@@ -40,6 +41,7 @@ module.exports = [
       sourceType: 'commonjs',
       globals: {
         ...globals.node,
+        ...globals.browser,
         ...globals.webextensions,
       },
     },

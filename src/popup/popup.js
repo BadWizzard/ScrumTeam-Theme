@@ -27,10 +27,21 @@
   // Buttons stay disabled until the initial load resolves, so a click can
   // never race render() with a null/undefined settings object.
   setButtonsDisabled(true);
-  SL.store.load().then((settings) => {
-    render(settings);
-    setButtonsDisabled(false);
-  });
+  SL.store
+    .load()
+    .then((settings) => {
+      render(settings);
+      setButtonsDisabled(false);
+      // Settle signal for the e2e suite: the initial load has finished, so a
+      // test may now seed storage without racing this page's own startup.
+      window.__slReady = true;
+    })
+    .catch((err) => {
+      console.warn('[SL] load failed', err);
+      // Buttons deliberately stay disabled: there is no known-good `current`
+      // to save a patch against.
+      window.__slReady = true;
+    });
 
   for (const b of buttons) {
     b.addEventListener('click', () => {

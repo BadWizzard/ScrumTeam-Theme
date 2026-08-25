@@ -1,55 +1,29 @@
-const { test, expect, storage } = require('./fixtures/extension');
+const {
+  test,
+  expect,
+  storage,
+  settled,
+  seed,
+  installFailingSet,
+  restoreRealSet,
+} = require('./fixtures/extension');
 
-test.beforeEach(async ({ extPage }) => {
-  const page = await extPage('popup/popup.html');
-  await storage.clear(page);
-});
+// No storage reset between tests: the fixture launches a fresh persistent
+// context (and therefore an empty chrome.storage.sync) for every test. The
+// throwaway-page beforeEach that used to clear storage here was itself the
+// source of a flake — its page's own startup write could land after a test
+// had already seeded a value.
 
-// Installs a chrome.storage.sync.set stub that always fails with
-// chrome.runtime.lastError = { message: 'QUOTA' }, so SL.store.save()
-// rejects. Stashes the real implementation on window so restoreRealSet can
-// put it back.
-async function installFailingSet(page) {
-  await page.evaluate(() => {
-    window.__slRealSet = window.__slRealSet || chrome.storage.sync.set.bind(chrome.storage.sync);
-    const stub = (items, cb) => {
-      Object.defineProperty(chrome.runtime, 'lastError', {
-        value: { message: 'QUOTA' },
-        configurable: true,
-      });
-      cb();
-      delete chrome.runtime.lastError;
-    };
-    try {
-      chrome.storage.sync.set = stub;
-    } catch {
-      try {
-        Object.defineProperty(chrome.storage.sync, 'set', { value: stub, configurable: true });
-      } catch {
-        const real = chrome.storage.sync;
-        const proxy = new Proxy(real, { get: (t, k) => (k === 'set' ? stub : t[k]) });
-        Object.defineProperty(chrome.storage, 'sync', { value: proxy, configurable: true });
-      }
-    }
-  });
-}
-
-async function restoreRealSet(page) {
-  await page.evaluate(() => {
-    chrome.storage.sync.set = window.__slRealSet;
-  });
-}
-
-test('default mode is Dark and is checked on load', async ({ extPage }) => {
-  const page = await extPage('popup/popup.html');
+test('default mode is Dark and is checked on load', async ({ openSettled }) => {
+  const page = await openSettled('popup/popup.html');
   await expect(page.locator('button[data-mode="dark"]')).toHaveAttribute('aria-checked', 'true');
   await expect(page.locator('button[data-mode="light"]')).toHaveAttribute('aria-checked', 'false');
   await expect(page.locator('button[data-mode="system"]')).toHaveAttribute('aria-checked', 'false');
 });
 
-test('clicking a mode writes only { mode } and never clobbers themes', async ({ extPage }) => {
-  const page = await extPage('popup/popup.html');
-  await storage.set(page, {
+test('clicking a mode writes only { mode } and never clobbers themes', async ({ openSettled }) => {
+  const page = await openSettled('popup/popup.html');
+  await seed(page, {
     settings: {
       v: 2,
       mode: 'dark',
@@ -72,6 +46,7 @@ test('clicking a mode writes only { mode } and never clobbers themes', async ({ 
     },
   });
   await page.reload();
+  await settled(page);
 
   await page.locator('button[data-mode="light"]').click();
   await expect(page.locator('button[data-mode="light"]')).toHaveAttribute('aria-checked', 'true');
@@ -81,8 +56,8 @@ test('clicking a mode writes only { mode } and never clobbers themes', async ({ 
   expect(stored.settings.themes.light.background).toBe('#f5efe0');
 });
 
-test('gear button opens the options page', async ({ context, extPage }) => {
-  const page = await extPage('popup/popup.html');
+test('gear button opens the options page', async ({ context, openSettled }) => {
+  const page = await openSettled('popup/popup.html');
 
   const [optionsPage] = await Promise.all([
     context.waitForEvent('page'),
@@ -93,8 +68,10 @@ test('gear button opens the options page', async ({ context, extPage }) => {
   expect(optionsPage.url()).toContain('options/options.html');
 });
 
-test('a failed save surfaces an error and keeps the previous mode checked', async ({ extPage }) => {
-  const page = await extPage('popup/popup.html');
+test('a failed save surfaces an error and keeps the previous mode checked', async ({
+  openSettled,
+}) => {
+  const page = await openSettled('popup/popup.html');
   // Confirm dark is the starting checked mode before we break writes.
   await expect(page.locator('button[data-mode="dark"]')).toHaveAttribute('aria-checked', 'true');
 
@@ -109,10 +86,15 @@ test('a failed save surfaces an error and keeps the previous mode checked', asyn
 });
 
 test('rapid clicks while saves are failing settle on one consistent mode, not a third value', async ({
-  extPage,
+  openSettled,
 }) => {
-  const page = await extPage('popup/popup.html');
+  const page = await openSettled('popup/popup.html');
   await expect(page.locator('button[data-mode="dark"]')).toHaveAttribute('aria-checked', 'true');
+
+  // Put a real v2 record in storage first, so the final assertion ("the
+  // checked button matches what storage holds") has something to compare
+  // against once every subsequent write is made to fail.
+  await page.evaluate(() => SL.store.save({ mode: 'dark' }));
 
   await installFailingSet(page);
 
@@ -133,8 +115,8 @@ test('rapid clicks while saves are failing settle on one consistent mode, not a 
   await expect(checked).toHaveAttribute('data-mode', stored.settings.mode);
 });
 
-test('a successful save after a failure clears the error status', async ({ extPage }) => {
-  const page = await extPage('popup/popup.html');
+test('a successful save after a failure clears the error status', async ({ openSettled }) => {
+  const page = await openSettled('popup/popup.html');
   await installFailingSet(page);
 
   await page.locator('button[data-mode="light"]').click();

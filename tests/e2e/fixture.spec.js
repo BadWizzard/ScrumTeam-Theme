@@ -1,7 +1,7 @@
 const { test, expect, storage } = require('./fixtures/extension');
 
-test('popup shows the three mode buttons', async ({ extPage }) => {
-  const page = await extPage('popup/popup.html');
+test('popup shows the three mode buttons', async ({ openSettled }) => {
+  const page = await openSettled('popup/popup.html');
   const buttons = page.locator('.modes button[data-mode]');
   await expect(buttons).toHaveCount(3);
   await expect(page.locator('button[data-mode="dark"]')).toBeVisible();
@@ -10,9 +10,9 @@ test('popup shows the three mode buttons', async ({ extPage }) => {
 });
 
 test('clicking Light does not throw and persists mode to chrome.storage.sync', async ({
-  extPage,
+  openSettled,
 }) => {
-  const page = await extPage('popup/popup.html');
+  const page = await openSettled('popup/popup.html');
   const errors = [];
   page.on('pageerror', (err) => errors.push(err));
 
