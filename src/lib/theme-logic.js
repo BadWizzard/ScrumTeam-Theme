@@ -3,6 +3,9 @@
   const defaults =
     (root && root.SL && root.SL.defaults) ||
     (typeof require === 'function' && require('./defaults.js'));
+  if (!defaults) {
+    throw new Error('[SL] theme-logic.js requires defaults.js to be loaded first');
+  }
   const { MODES, DEFAULT_MODE } = defaults;
 
   /**
