@@ -246,13 +246,27 @@
     e.resetTheme.addEventListener('click', () => {
       cancelPending(name);
       generation[name]++;
+      // Counted like any other save, so isPending(name) stays true while the
+      // reset write is in flight and an inbound onChange can't render a stale
+      // value over it.
+      savesInFlight[name]++;
       store
         .save({ themes: { [name]: DEFAULT_THEMES[name] } })
         .then((settings) => {
           setStatus('Saved');
-          render(settings);
+          // Force-render only the card that was reset — a full render() would
+          // also overwrite the other card, including a hex the user may be
+          // mid-typing an invalid value into. The other card is refreshed
+          // through the same rules as any external change instead (and is
+          // skipped while it has pending local edits). This card is skipped by
+          // renderFromChange because savesInFlight is still 1 here.
+          renderCard(name, normalizeTheme(settings.themes[name], DEFAULT_THEMES[name]));
+          renderFromChange(settings);
         })
-        .catch((err) => setStatus('Not saved — ' + err.message, 'error'));
+        .catch((err) => setStatus('Not saved — ' + err.message, 'error'))
+        .finally(() => {
+          savesInFlight[name]--;
+        });
     });
   }
 
@@ -262,19 +276,32 @@
     for (const name of NAMES) {
       cancelPending(name);
       generation[name]++;
+      savesInFlight[name]++;
     }
     store
       .save(DEFAULT_SETTINGS)
       .then((settings) => {
         setStatus('Saved');
+        // Reset-all *is* meant to overwrite both cards unconditionally.
         render(settings);
       })
-      .catch((err) => setStatus('Not saved — ' + err.message, 'error'));
+      .catch((err) => setStatus('Not saved — ' + err.message, 'error'))
+      .finally(() => {
+        for (const name of NAMES) savesInFlight[name]--;
+      });
   });
 
   store
     .load()
-    .then(render)
-    .catch((err) => setStatus('Not loaded — ' + err.message, 'error'));
+    .then((settings) => {
+      render(settings);
+      // Settle signal for the e2e suite: the initial load has finished, so a
+      // test may now seed storage without racing this page's own startup.
+      window.__slReady = true;
+    })
+    .catch((err) => {
+      setStatus('Not loaded — ' + err.message, 'error');
+      window.__slReady = true;
+    });
   store.onChange(renderFromChange);
 })();

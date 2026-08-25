@@ -1,39 +1,16 @@
-const { test, expect, storage } = require('./fixtures/extension');
+const {
+  test,
+  expect,
+  storage,
+  settled,
+  seed,
+  installFailingSet,
+} = require('./fixtures/extension');
 const { buildFilter } = require('../../src/lib/filter.js');
 const { DEFAULT_THEMES } = require('../../src/lib/defaults.js');
 
-test.beforeEach(async ({ extPage }) => {
-  const page = await extPage('options/options.html');
-  await storage.clear(page);
-});
-
-// Installs a chrome.storage.sync.set stub that always fails with
-// chrome.runtime.lastError = { message: 'QUOTA' }, so SL.store.save()
-// rejects. Mirrors tests/e2e/popup.spec.js's installFailingSet.
-async function installFailingSet(page) {
-  await page.evaluate(() => {
-    window.__slRealSet = window.__slRealSet || chrome.storage.sync.set.bind(chrome.storage.sync);
-    const stub = (items, cb) => {
-      Object.defineProperty(chrome.runtime, 'lastError', {
-        value: { message: 'QUOTA' },
-        configurable: true,
-      });
-      cb();
-      delete chrome.runtime.lastError;
-    };
-    try {
-      chrome.storage.sync.set = stub;
-    } catch {
-      try {
-        Object.defineProperty(chrome.storage.sync, 'set', { value: stub, configurable: true });
-      } catch {
-        const real = chrome.storage.sync;
-        const proxy = new Proxy(real, { get: (t, k) => (k === 'set' ? stub : t[k]) });
-        Object.defineProperty(chrome.storage, 'sync', { value: proxy, configurable: true });
-      }
-    }
-  });
-}
+// No storage reset between tests: the fixture launches a fresh persistent
+// context (and therefore an empty chrome.storage.sync) for every test.
 
 function darkBgHex(page) {
   return page.locator('section[data-theme="dark"] input[type="text"][data-field="background"]');
@@ -45,8 +22,8 @@ function lightBgHex(page) {
   return page.locator('section[data-theme="light"] input[type="text"][data-field="background"]');
 }
 
-test('renders the default dark and light themes on load', async ({ extPage }) => {
-  const page = await extPage('options/options.html');
+test('renders the default dark and light themes on load', async ({ openSettled }) => {
+  const page = await openSettled('options/options.html');
 
   await expect(darkBgHex(page)).toHaveValue(DEFAULT_THEMES.dark.background);
   await expect(darkTextHex(page)).toHaveValue(DEFAULT_THEMES.dark.text);
@@ -57,10 +34,10 @@ test('renders the default dark and light themes on load', async ({ extPage }) =>
 });
 
 test('editing the dark background writes only themes.dark and updates the preview matrix', async ({
-  extPage,
+  openSettled,
 }) => {
-  const page = await extPage('options/options.html');
-  await storage.set(page, {
+  const page = await openSettled('options/options.html');
+  await seed(page, {
     settings: {
       v: 2,
       mode: 'system',
@@ -71,6 +48,7 @@ test('editing the dark background writes only themes.dark and updates the previe
     },
   });
   await page.reload();
+  await settled(page);
 
   await darkBgHex(page).fill('#101820');
 
@@ -97,9 +75,9 @@ test('editing the dark background writes only themes.dark and updates the previe
   expect(previewFilter).toContain('url("#sl-matrix-dark")');
 });
 
-test('per-theme reset restores that theme only', async ({ extPage }) => {
-  const page = await extPage('options/options.html');
-  await storage.set(page, {
+test('per-theme reset restores that theme only', async ({ openSettled }) => {
+  const page = await openSettled('options/options.html');
+  await seed(page, {
     settings: {
       v: 2,
       mode: 'system',
@@ -110,6 +88,7 @@ test('per-theme reset restores that theme only', async ({ extPage }) => {
     },
   });
   await page.reload();
+  await settled(page);
 
   await page.locator('section[data-theme="dark"] button.reset-theme').click();
 
@@ -120,11 +99,14 @@ test('per-theme reset restores that theme only', async ({ extPage }) => {
   const stored = await storage.get(page);
   expect(stored.settings.themes.light.background).toBe('#f5efe0');
   await expect(darkBgHex(page)).toHaveValue(DEFAULT_THEMES.dark.background);
+  // The reset renders only the card that was reset; the other card keeps
+  // showing the stored value it already had.
+  await expect(lightBgHex(page)).toHaveValue('#f5efe0');
 });
 
-test('reset all restores mode dark and both themes to defaults', async ({ extPage }) => {
-  const page = await extPage('options/options.html');
-  await storage.set(page, {
+test('reset all restores mode dark and both themes to defaults', async ({ openSettled }) => {
+  const page = await openSettled('options/options.html');
+  await seed(page, {
     settings: {
       v: 2,
       mode: 'light',
@@ -135,12 +117,11 @@ test('reset all restores mode dark and both themes to defaults', async ({ extPag
     },
   });
   await page.reload();
+  await settled(page);
 
   await page.locator('#reset-all').click();
 
-  await expect
-    .poll(async () => (await storage.get(page)).settings.mode)
-    .toBe('dark');
+  await expect.poll(async () => (await storage.get(page)).settings.mode).toBe('dark');
 
   const stored = await storage.get(page);
   expect(stored.settings.themes.dark).toEqual(DEFAULT_THEMES.dark);
@@ -149,9 +130,8 @@ test('reset all restores mode dark and both themes to defaults', async ({ extPag
   await expect(lightBgHex(page)).toHaveValue(DEFAULT_THEMES.light.background);
 });
 
-test('invalid hex marks the field invalid and does not save', async ({ extPage }) => {
-  const page = await extPage('options/options.html');
-  await expect.poll(() => storage.get(page)).toMatchObject({ settings: { v: 2 } });
+test('invalid hex marks the field invalid and does not save', async ({ openSettled }) => {
+  const page = await openSettled('options/options.html');
 
   await darkBgHex(page).fill('#fff');
   await expect(darkBgHex(page)).toHaveAttribute('aria-invalid', 'true');
@@ -162,12 +142,13 @@ test('invalid hex marks the field invalid and does not save', async ({ extPage }
   await page.waitForTimeout(500);
 
   const stored = await storage.get(page);
-  expect(stored.settings.themes.dark.background).toBe(DEFAULT_THEMES.dark.background);
+  // Nothing was ever written: an invalid hex never commits, and a fresh
+  // profile's load() writes nothing either.
+  expect(stored.settings).toBeUndefined();
 });
 
-test('a stubbed storage failure surfaces a Not saved status', async ({ extPage }) => {
-  const page = await extPage('options/options.html');
-  await expect.poll(() => storage.get(page)).toMatchObject({ settings: { v: 2 } });
+test('a stubbed storage failure surfaces a Not saved status', async ({ openSettled }) => {
+  const page = await openSettled('options/options.html');
 
   await installFailingSet(page);
 
@@ -177,8 +158,8 @@ test('a stubbed storage failure surfaces a Not saved status', async ({ extPage }
   await expect(page.locator('#status')).toHaveAttribute('data-state', 'error');
 });
 
-test('a low-contrast dark theme shows the readability hint', async ({ extPage }) => {
-  const page = await extPage('options/options.html');
+test('a low-contrast dark theme shows the readability hint', async ({ openSettled }) => {
+  const page = await openSettled('options/options.html');
 
   await darkTextHex(page).fill('#2a2a2a');
 
@@ -188,10 +169,9 @@ test('a low-contrast dark theme shows the readability hint', async ({ extPage })
 });
 
 test('editing both cards in quick succession keeps both edits (no cross-card clobber)', async ({
-  extPage,
+  openSettled,
 }) => {
-  const page = await extPage('options/options.html');
-  await expect.poll(() => storage.get(page)).toMatchObject({ settings: { v: 2 } });
+  const page = await openSettled('options/options.html');
 
   // No wait between these two fills: the dark save (fires ~400ms later)
   // must not clobber the light edit made a moment after it, and vice versa.
@@ -199,12 +179,12 @@ test('editing both cards in quick succession keeps both edits (no cross-card clo
   await lightBgHex(page).fill('#f5efe0');
 
   await expect
-    .poll(async () => (await storage.get(page)).settings.themes.dark.background, {
+    .poll(async () => (await storage.get(page)).settings?.themes.dark.background, {
       timeout: 1500,
     })
     .toBe('#101820');
   await expect
-    .poll(async () => (await storage.get(page)).settings.themes.light.background, {
+    .poll(async () => (await storage.get(page)).settings?.themes.light.background, {
       timeout: 1500,
     })
     .toBe('#f5efe0');
@@ -213,18 +193,38 @@ test('editing both cards in quick succession keeps both edits (no cross-card clo
   await expect(lightBgHex(page)).toHaveValue('#f5efe0');
 });
 
-test('an in-progress invalid hex on one card survives the other card saving', async ({ extPage }) => {
-  const page = await extPage('options/options.html');
-  await expect.poll(() => storage.get(page)).toMatchObject({ settings: { v: 2 } });
+test('two saves issued in the same tick are serialized and both land', async ({ openSettled }) => {
+  const page = await openSettled('options/options.html');
 
-  const lightHex = page.locator('section[data-theme="light"] input[type="text"][data-field="background"]');
+  // save() is read-modify-write. Without the promise chain in
+  // settings-store.js these two would both read the same base and the second
+  // write would drop the first patch.
+  const stored = await page.evaluate(async () => {
+    await Promise.all([
+      SL.store.save({ mode: 'light' }),
+      SL.store.save({ themes: { dark: { background: '#101820' } } }),
+    ]);
+    return new Promise((r) => chrome.storage.sync.get(null, r));
+  });
+
+  expect(stored.settings.mode).toBe('light');
+  expect(stored.settings.themes.dark.background).toBe('#101820');
+  expect(stored.settings.themes.light).toEqual(DEFAULT_THEMES.light);
+});
+
+test('an in-progress invalid hex on one card survives the other card saving', async ({
+  openSettled,
+}) => {
+  const page = await openSettled('options/options.html');
+
+  const lightHex = lightBgHex(page);
   await lightHex.fill('zzz');
   await expect(lightHex).toHaveAttribute('aria-invalid', 'true');
 
   await darkBgHex(page).fill('#101820');
 
   await expect
-    .poll(async () => (await storage.get(page)).settings.themes.dark.background, { timeout: 1500 })
+    .poll(async () => (await storage.get(page)).settings?.themes.dark.background, { timeout: 1500 })
     .toBe('#101820');
 
   await expect(lightHex).toHaveValue('zzz');
@@ -232,10 +232,9 @@ test('an in-progress invalid hex on one card survives the other card saving', as
 });
 
 test('resetting a theme wins over a leftover debounced save from before the reset', async ({
-  extPage,
+  openSettled,
 }) => {
-  const page = await extPage('options/options.html');
-  await expect.poll(() => storage.get(page)).toMatchObject({ settings: { v: 2 } });
+  const page = await openSettled('options/options.html');
 
   // No wait between the edit and the reset click: the edit's debounced save
   // (fires ~400ms later) must not overwrite the reset that happened first.
@@ -243,7 +242,7 @@ test('resetting a theme wins over a leftover debounced save from before the rese
   await page.locator('section[data-theme="dark"] button.reset-theme').click();
 
   await expect
-    .poll(async () => (await storage.get(page)).settings.themes.dark.background, {
+    .poll(async () => (await storage.get(page)).settings?.themes.dark.background, {
       timeout: 1500,
     })
     .toBe(DEFAULT_THEMES.dark.background);
@@ -257,15 +256,32 @@ test('resetting a theme wins over a leftover debounced save from before the rese
   await expect(darkBgHex(page)).toHaveValue(DEFAULT_THEMES.dark.background);
 });
 
-test('reset-all wins over a leftover debounced save from before the reset', async ({ extPage }) => {
-  const page = await extPage('options/options.html');
-  await expect.poll(() => storage.get(page)).toMatchObject({ settings: { v: 2 } });
+test('resetting one card leaves an in-progress invalid hex on the other card alone', async ({
+  openSettled,
+}) => {
+  const page = await openSettled('options/options.html');
+
+  const lightHex = lightBgHex(page);
+  await lightHex.fill('zzz');
+  await expect(lightHex).toHaveAttribute('aria-invalid', 'true');
+
+  await page.locator('section[data-theme="dark"] button.reset-theme').click();
+  await expect(page.locator('#status')).toHaveText('Saved');
+
+  await expect(lightHex).toHaveValue('zzz');
+  await expect(lightHex).toHaveAttribute('aria-invalid', 'true');
+});
+
+test('reset-all wins over a leftover debounced save from before the reset', async ({
+  openSettled,
+}) => {
+  const page = await openSettled('options/options.html');
 
   await lightBgHex(page).fill('#f5efe0');
   await page.locator('#reset-all').click();
 
   await expect
-    .poll(async () => (await storage.get(page)).settings.themes.light.background, {
+    .poll(async () => (await storage.get(page)).settings?.themes.light.background, {
       timeout: 1500,
     })
     .toBe(DEFAULT_THEMES.light.background);
