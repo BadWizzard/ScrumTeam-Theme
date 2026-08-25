@@ -2,6 +2,7 @@
   "manifest_version": 3,
   "name": "ScrumLaunch Teams — Dark Modern",
   "version": "1.0.0",
+  "minimum_chrome_version": "111",
   "description": "Dark theme (Cursor / VS Code Dark Modern palette) for teams.scrumlaunch.com with a Dark / Light / System switch.",
   "permissions": ["storage"],
   "action": {

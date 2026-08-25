@@ -26,6 +26,7 @@ module.exports = [
       globals: {
         ...globals.browser,
         ...globals.webextensions,
+        SL: 'readonly',
       },
     },
   },

@@ -17,6 +17,7 @@
     "@playwright/test": "1.56.1",
     "eslint": "^9.0.0",
     "globals": "^15.0.0",
+    "pngjs": "^7.0.0",
     "prettier": "^3.0.0"
   }
 }
