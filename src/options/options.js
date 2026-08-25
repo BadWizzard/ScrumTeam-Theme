@@ -14,6 +14,12 @@
 
   const status = document.getElementById('status');
   const saveTimers = {};
+  // Snapshot of the theme to save, captured at schedule time (and
+  // re-captured on every subsequent edit before the debounce fires), so the
+  // eventual save always writes the exact value the user last typed — never
+  // a late read of `state[name]` that something else may have touched.
+  const pendingTheme = {};
+  const savesInFlight = { dark: 0, light: 0 };
   // Last known-good theme per card. Read/written instead of the DOM so an
   // in-progress invalid hex edit never leaks into a save or a preview.
   const state = {};
@@ -48,6 +54,22 @@
     else delete status.dataset.state;
   }
 
+  // True while a card has local state that hasn't (yet) been fully
+  // reconciled with storage: a debounced save waiting to fire, a save
+  // in flight, or an invalid hex string sitting uncommitted in an input.
+  // A render triggered by SL.store.onChange must skip such a card so it
+  // never clobbers an edit the user is still mid-typing on another card's
+  // save landing, or wipes an aria-invalid hex back to the stored value.
+  function isPending(name) {
+    const e = cards[name];
+    return (
+      !!saveTimers[name] ||
+      savesInFlight[name] > 0 ||
+      e.bgHex.getAttribute('aria-invalid') === 'true' ||
+      e.textHex.getAttribute('aria-invalid') === 'true'
+    );
+  }
+
   function updateHint(name, theme) {
     const e = cards[name];
     if (theme.background === theme.text) {
@@ -70,12 +92,21 @@
   }
 
   function scheduleSave(name) {
+    // Snapshot now: this is exactly what gets written when the debounce
+    // fires, even if state[name] is later touched by something else.
+    pendingTheme[name] = { ...state[name] };
     clearTimeout(saveTimers[name]);
     saveTimers[name] = setTimeout(() => {
+      saveTimers[name] = null;
+      const theme = pendingTheme[name];
+      savesInFlight[name]++;
       store
-        .save({ themes: { [name]: state[name] } })
+        .save({ themes: { [name]: theme } })
         .then(() => setStatus('Saved'))
-        .catch((err) => setStatus('Not saved — ' + err.message, 'error'));
+        .catch((err) => setStatus('Not saved — ' + err.message, 'error'))
+        .finally(() => {
+          savesInFlight[name]--;
+        });
     }, SAVE_DEBOUNCE_MS);
   }
 
@@ -108,8 +139,21 @@
     updatePreview(name, theme);
   }
 
+  // Full, unconditional render of both cards — used for explicit user
+  // actions (initial load, per-theme reset, reset-all) where overwriting
+  // whatever was in the fields is exactly the intent.
   function render(settings) {
     for (const name of NAMES) {
+      renderCard(name, normalizeTheme(settings.themes[name], DEFAULT_THEMES[name]));
+    }
+  }
+
+  // Render triggered by SL.store.onChange (our own saves landing, or a
+  // change from another tab/the popup): skip any card that still has
+  // pending local edits so it never gets clobbered mid-flight.
+  function renderFromChange(settings) {
+    for (const name of NAMES) {
+      if (isPending(name)) continue;
       renderCard(name, normalizeTheme(settings.themes[name], DEFAULT_THEMES[name]));
     }
   }
@@ -183,6 +227,9 @@
       .catch((err) => setStatus('Not saved — ' + err.message, 'error'));
   });
 
-  store.load().then(render);
-  store.onChange(render);
+  store
+    .load()
+    .then(render)
+    .catch((err) => setStatus('Not loaded — ' + err.message, 'error'));
+  store.onChange(renderFromChange);
 })();

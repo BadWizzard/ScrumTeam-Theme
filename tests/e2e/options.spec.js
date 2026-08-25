@@ -186,3 +186,47 @@ test('a low-contrast dark theme shows the readability hint', async ({ extPage })
     timeout: 1000,
   });
 });
+
+test('editing both cards in quick succession keeps both edits (no cross-card clobber)', async ({
+  extPage,
+}) => {
+  const page = await extPage('options/options.html');
+  await expect.poll(() => storage.get(page)).toMatchObject({ settings: { v: 2 } });
+
+  // No wait between these two fills: the dark save (fires ~400ms later)
+  // must not clobber the light edit made a moment after it, and vice versa.
+  await darkBgHex(page).fill('#101820');
+  await lightBgHex(page).fill('#f5efe0');
+
+  await expect
+    .poll(async () => (await storage.get(page)).settings.themes.dark.background, {
+      timeout: 1500,
+    })
+    .toBe('#101820');
+  await expect
+    .poll(async () => (await storage.get(page)).settings.themes.light.background, {
+      timeout: 1500,
+    })
+    .toBe('#f5efe0');
+
+  await expect(darkBgHex(page)).toHaveValue('#101820');
+  await expect(lightBgHex(page)).toHaveValue('#f5efe0');
+});
+
+test('an in-progress invalid hex on one card survives the other card saving', async ({ extPage }) => {
+  const page = await extPage('options/options.html');
+  await expect.poll(() => storage.get(page)).toMatchObject({ settings: { v: 2 } });
+
+  const lightHex = page.locator('section[data-theme="light"] input[type="text"][data-field="background"]');
+  await lightHex.fill('zzz');
+  await expect(lightHex).toHaveAttribute('aria-invalid', 'true');
+
+  await darkBgHex(page).fill('#101820');
+
+  await expect
+    .poll(async () => (await storage.get(page)).settings.themes.dark.background, { timeout: 1500 })
+    .toBe('#101820');
+
+  await expect(lightHex).toHaveValue('zzz');
+  await expect(lightHex).toHaveAttribute('aria-invalid', 'true');
+});
