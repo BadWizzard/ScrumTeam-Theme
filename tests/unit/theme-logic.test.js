@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { resolveTheme, DEFAULT_MODE, MODES } = require('../theme-logic.js');
+const { resolveTheme, DEFAULT_MODE, MODES } = require('../../src/lib/theme-logic.js');
 
 test('default mode is dark', () => {
   assert.equal(DEFAULT_MODE, 'dark');

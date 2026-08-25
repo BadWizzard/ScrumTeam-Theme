@@ -1,0 +1,22 @@
+{
+  "name": "dark-modern-for-scrumlaunch-teams",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Dark theme (Cursor / VS Code Dark Modern palette) for teams.scrumlaunch.com with a Dark / Light / System switch.",
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier -w .",
+    "test:unit": "node --test tests/unit/",
+    "test:e2e": "playwright test",
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:site": "E2E_SITE=1 playwright test tests/e2e/site.spec.js",
+    "package": "scripts/package.sh",
+    "screenshots": "playwright test scripts/screenshots.spec.js"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.56.1",
+    "eslint": "^9.0.0",
+    "globals": "^15.0.0",
+    "prettier": "^3.0.0"
+  }
+}

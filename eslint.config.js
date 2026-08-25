@@ -1,0 +1,56 @@
+const js = require('@eslint/js');
+const globals = require('globals');
+
+module.exports = [
+  {
+    ignores: ['node_modules/**', 'dist/**', 'store/**', 'playwright-report/**', 'test-results/**'],
+  },
+  js.configs.recommended,
+  {
+    // src/lib is a UMD-style library: module.exports in Node, self.SL* in the browser.
+    files: ['src/lib/**/*.js'],
+    languageOptions: {
+      sourceType: 'script',
+      globals: {
+        ...globals.browser,
+        ...globals.webextensions,
+        ...globals.node,
+      },
+    },
+  },
+  {
+    files: ['src/**/*.js'],
+    ignores: ['src/lib/**/*.js'],
+    languageOptions: {
+      sourceType: 'script',
+      globals: {
+        ...globals.browser,
+        ...globals.webextensions,
+      },
+    },
+  },
+  {
+    // Playwright fixture: CommonJS helpers whose callbacks run inside the extension page (chrome.*).
+    files: ['tests/e2e/fixtures/**/*.js'],
+    rules: {
+      'no-empty-pattern': 'off',
+    },
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        ...globals.node,
+        ...globals.webextensions,
+      },
+    },
+  },
+  {
+    files: ['tests/**/*.js', 'scripts/**/*.js', 'eslint.config.js', 'playwright.config.js'],
+    ignores: ['tests/e2e/fixtures/**/*.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        ...globals.node,
+      },
+    },
+  },
+];
