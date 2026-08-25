@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { resolveTheme, DEFAULT_MODE, MODES } = require('../../src/lib/theme-logic.js');
+const defaults = require('../../src/lib/defaults.js');
 
 test('default mode is dark', () => {
   assert.equal(DEFAULT_MODE, 'dark');
@@ -8,6 +9,11 @@ test('default mode is dark', () => {
 
 test('exposes the three selectable modes', () => {
   assert.deepEqual(MODES, ['dark', 'light', 'system']);
+});
+
+test('MODES and DEFAULT_MODE are the same objects/values as defaults.js (no duplicate constant)', () => {
+  assert.equal(MODES, defaults.MODES);
+  assert.equal(DEFAULT_MODE, defaults.DEFAULT_MODE);
 });
 
 test('dark mode resolves to dark regardless of system', () => {

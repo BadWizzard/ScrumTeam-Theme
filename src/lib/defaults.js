@@ -42,6 +42,7 @@
     return Object.freeze(obj);
   }
 
+  deepFreeze(MODES);
   deepFreeze(DEFAULT_THEMES);
   deepFreeze(DEFAULT_SETTINGS);
   deepFreeze(RANGE);
@@ -54,6 +55,8 @@
     SETTINGS_VERSION,
     RANGE,
   };
+
+  deepFreeze(api);
 
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else {

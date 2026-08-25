@@ -1,7 +1,9 @@
 // Pure theme logic shared by content.js and popup.js. No browser APIs here.
 (function (root) {
-  const MODES = ['dark', 'light', 'system'];
-  const DEFAULT_MODE = 'dark';
+  const defaults =
+    (root && root.SL && root.SL.defaults) ||
+    (typeof require === 'function' && require('./defaults.js'));
+  const { MODES, DEFAULT_MODE } = defaults;
 
   /**
    * @param {string|undefined} mode  'dark' | 'light' | 'system'
@@ -16,5 +18,9 @@
 
   const api = { MODES, DEFAULT_MODE, resolveTheme };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
-  else root.SLTheme = api;
+  else {
+    root.SLTheme = api;
+    root.SL = root.SL || {};
+    root.SL.theme = api;
+  }
 })(typeof self !== 'undefined' ? self : this);
