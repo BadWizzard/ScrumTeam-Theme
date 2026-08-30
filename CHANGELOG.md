@@ -23,6 +23,16 @@ this project's versioning follows the extension's `src/manifest.json`
   surface (popup vs. options) or device cannot clobber a _different_ field
   edited on another; the same field is last-write-wins.
 - A gear button in the popup that opens the new options page.
+- Photos the Flutter app paints inside its canvas (profile avatars, uploaded
+  logos, picked-photo previews) now keep their original colors in dark mode:
+  a MAIN-world content script (`content/page.js`) wraps the page's
+  `ImageDecoder` and `HTMLImageElement.decode` — the two codecs the Flutter
+  engine turns images into textures with — and pre-corrects every decoded
+  image with the inverse matrix so the page filter maps it back to the
+  original. Highlights brighter than
+  the theme's text color are capped at that brightness. A theme change on a
+  page holding such images reloads it (deferred while a text field is
+  focused), since Flutter's decoded-image cache cannot be flushed from outside.
 - Store-readiness: `_locales/en` manifest metadata, extension icons,
   `scripts/package.sh` and `scripts/screenshots.spec.js`, GitHub Actions CI
   (`ci.yml`, `site-smoke.yml`), and the documentation set in `docs/` and

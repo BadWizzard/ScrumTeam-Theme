@@ -121,8 +121,29 @@ test('homepage_url is either absent or a public https URL', () => {
   }
 });
 
-test('every js file listed in the content script exists on disk', () => {
-  for (const rel of manifest.content_scripts[0].js.concat(manifest.content_scripts[0].css)) {
-    assert.ok(fs.existsSync(path.join(__dirname, '../../src', rel)), `${rel} exists`);
+test('every js/css file listed in any content script exists on disk', () => {
+  for (const cs of manifest.content_scripts) {
+    for (const rel of (cs.js || []).concat(cs.css || [])) {
+      assert.ok(fs.existsSync(path.join(__dirname, '../../src', rel)), `${rel} exists`);
+    }
   }
+});
+
+// content/page.js must run in the page's own JS world: it wraps the page's
+// `ImageDecoder`, which an isolated-world script cannot reach. `world` needs
+// Chrome 111 — the same floor color-mix() already imposes.
+test('content_scripts[1] is content/page.js in the MAIN world, same matches, document_start, all frames', () => {
+  const cs = manifest.content_scripts[1];
+  assert.ok(cs, 'content_scripts[1] exists');
+  assert.deepEqual(cs.matches, manifest.content_scripts[0].matches);
+  assert.deepEqual(cs.js, ['content/page.js']);
+  assert.equal(cs.css, undefined);
+  assert.equal(cs.world, 'MAIN');
+  assert.equal(cs.run_at, 'document_start');
+  assert.equal(cs.all_frames, true);
+});
+
+test('the isolated-world content script never declares a world', () => {
+  assert.equal(manifest.content_scripts[0].world, undefined);
+  assert.equal(manifest.content_scripts.length, 2);
 });

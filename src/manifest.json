@@ -38,6 +38,13 @@
       ],
       "run_at": "document_start",
       "all_frames": true
+    },
+    {
+      "matches": ["*://teams.scrumlaunch.com/*"],
+      "js": ["content/page.js"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "world": "MAIN"
     }
   ]
 }
