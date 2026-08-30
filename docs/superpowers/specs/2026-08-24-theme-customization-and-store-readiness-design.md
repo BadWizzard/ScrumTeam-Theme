@@ -156,6 +156,55 @@ Helpers (in `lib/filter.js`, unit-tested): `compose(a, b)` (affine product), `in
   test still asserts it, and so does the offline `tests/e2e/content.spec.js`, whose fixture
   page carries the same `<base href="/">`.
 
+### Canvas images (`content/page.js`)
+
+- The site paints its photos (avatars, uploaded logos, picked-file previews) inside the
+  CanvasKit canvas, where the `theme.css` image rule can't reach them. Its `Image.network`
+  uses `WebHtmlElementStrategy.never`, so no `<img>` platform view is ever created. The
+  engine (revision `a8bfdfc3…`) turns raster images into textures via two codecs:
+  - bytes the app holds (assets, `Image.memory`, a picked file's preview): WebCodecs
+    `new ImageDecoder({type, data, …})` → `decode({frameIndex})` → the `VideoFrame` becomes
+    a CanvasKit texture via `MakeLazyImageFromTextureSource`;
+  - images loaded by URL (`createImageCodecFromUrl`, which `cached_network_image` on web
+    uses — i.e. every avatar/logo from `scrumteams-assets-prod.s3.amazonaws.com`, which
+    sends `Access-Control-Allow-Origin: *`): a detached
+    `<img crossOrigin="anonymous" decoding="async">`, `await img.decode()`, then
+    `naturalWidth/naturalHeight` and the element itself as the texture source.
+- `page.js` is a second `content_scripts` entry with `"world": "MAIN"` (Chrome 111+, the
+  existing floor), same `matches`, `document_start`, `all_frames`. It draws through a
+  scratch `<canvas>` with `ctx.filter = var(--sl-filter-inverse)` (the same
+  `url("#sl-matrix-inverse")` the CSS rule uses, read from `<html>`'s inline style):
+  - `window.ImageDecoder` is replaced by a subclass whose `decode()` returns a new
+    `VideoFrame` of the corrected canvas;
+  - `HTMLImageElement.prototype.decode` is wrapped: after the native decode, an element
+    that is **not connected** and has `crossOrigin === 'anonymous'` (the codec's signature;
+    a real DOM `<img>` is left to theme.css) is drawn through the filter, `toBlob`'d to a
+    PNG, its `src` swapped to that object URL (never revoked — the texture upload is lazy)
+    and natively decoded again before the promise resolves. A tainted canvas (no CORS
+    headers) throws in `toBlob` and the image stays as decoded.
+
+  The page filter then yields `M(M⁻¹(x)) = x`: the original pixels, except where `M⁻¹(x)`
+  clamps — highlights brighter than the theme's text color, which come out capped at that
+  brightness. When the property is unset or `'none'` (identity theme, singular matrix, or
+  before the first apply) images pass through untouched.
+
+- Every decode sets `html[data-sl-images]`. Flutter caches decoded images and nothing
+  outside the app can flush them, so in `apply()` content.js compares the forward matrix
+  with the one the document's images were decoded under (`'none'` initially) and, if it
+  changed and `data-sl-images` is present, calls `reloadForImages()`: `location.reload()`
+  immediately, or — when a text field is focused in a visible tab — on the next
+  `visibilitychange` to hidden. A `sessionStorage` stamp limits it to one automatic reload
+  per 10 s per document, so an image decoded before the first `apply()` can't loop.
+- Vector assets (the app's SVG icons/logos via flutter_svg) never pass through either
+  codec and keep following the UI recolor, which is the desired dark-theme behaviour for
+  them.
+- Covered offline in `tests/e2e/content.spec.js`: the fixture decodes a solid PNG through
+  `ImageDecoder`, and through a detached CORS `<img>` from a routed cross-origin URL, into
+  a `<canvas>`; the composited pixel equals the original color while a plain canvas fill
+  of the same color shows the forward matrix, and a connected `<img>`'s `decode()` leaves
+  its `src` alone; a theme switch reloads exactly once; with a focused input it does not
+  reload immediately.
+
 ## UI
 
 ### Popup

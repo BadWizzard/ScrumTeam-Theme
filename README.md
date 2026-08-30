@@ -73,18 +73,40 @@ is inverted and "keep original colors" is on), a tint that maps white to the
 theme's background color and black to its text color, a contrast adjustment,
 and a saturation adjustment. The inverse matrix is applied to real DOM images,
 video and elements with a CSS background-image, so photos and avatars outside
-the canvas keep their original colors. Settings live in `chrome.storage.sync`
+the canvas keep their original colors.
+
+Photos the app paints _inside_ the canvas (profile avatars, uploaded logos,
+the preview of a just-picked photo) are out of CSS's reach, so a second
+content script (`content/page.js`, running in the page's own JavaScript world)
+wraps the two browser decoders the Flutter engine turns raster images into
+textures with — WebCodecs `ImageDecoder` for bytes it already holds, and a
+detached `<img>` element's `decode()` for images it loads by URL, which is how
+every avatar arrives — and runs each decoded image through the inverse matrix
+before the engine gets it. The page filter then maps those pixels straight
+back to the original photo. The only loss is in highlights brighter than the
+theme's text color, which the filter cannot produce; they come out capped at
+that brightness, so a photo looks gently dimmed rather than inverted. The
+app's SVG icons and logos are drawn as vectors, never decoded as images, and
+keep following the UI recolor — exactly what a dark theme wants from them.
+Because Flutter keeps decoded images in its own cache, changing the theme
+while such a page is open reloads it so the images are decoded for the new
+transform; if you are typing in a field at that moment the reload waits until
+you switch away from the tab.
+
+Settings live in `chrome.storage.sync`
 under a single `settings` key (schema version 2); a legacy version-1 setting
 (`{ mode }` only) is migrated automatically the first time the extension loads
 under the new version.
 
 ## Limitations
 
-- Images and icons drawn **inside the canvas itself** (avatars, illustrations
-  the Flutter app paints as part of its own UI) are recolored along with
-  everything else — the extension cannot tell canvas-internal pixels apart
-  from the rest of the page. This is an inherent limit of a canvas-based
-  whole-page filter, not a bug.
+- Photos drawn **inside the canvas** are corrected on their way through the
+  browser's decoders (`ImageDecoder`, or an `<img>` element for URL-loaded
+  images whose server allows CORS — the site's asset bucket does), with
+  highlights capped at the theme's text brightness; a theme change on an open
+  page reloads it so cached images are decoded again. Vector artwork the app
+  draws itself (its SVG icons, logos and illustrations) is recolored with the
+  UI — a canvas-based whole-page filter cannot tell those pixels apart.
 - Only `teams.scrumlaunch.com` is themed; the extension does not touch any
   other site.
 

@@ -16,7 +16,11 @@ src/
   lib/theme-logic.js                resolveTheme(mode, systemPrefersDark); re-exports MODES/DEFAULT_MODE
   lib/filter.js                     buildFilter + matrix helpers (compose, invert, hueRotate180, saturate, contrast, tint, toFeValues)
   lib/settings-store.js             merge (pure); load/save/onChange over chrome.storage.sync
-  content/content.js                injects the SVG filters, applies/updates the theme, reacts to storage + OS changes
+  content/content.js                injects the SVG filters, applies/updates the theme, reacts to storage + OS changes;
+                                    reloads a page whose canvas images were decoded for a previous transform
+  content/page.js                   MAIN-world script: wraps the page's ImageDecoder and HTMLImageElement.decode so
+                                    photos the Flutter canvas paints are pre-corrected with the inverse matrix;
+                                    flags html[data-sl-images]
   content/theme.css                 filter wiring + scrollbar theming, scoped to html[data-sl-theme]
   popup/popup.html, popup.css, popup.js       toolbar popup: Dark / Light / System + gear
   options/options.html, options.css, options.js   options page: per-theme cards, live preview, auto-save
@@ -79,7 +83,14 @@ eslint.config.js, .prettierrc, playwright.config.js
   states, exactly-once v1→v2 migration). `content.spec.js` covers the content
   script offline by serving the site's URL from an in-memory fixture with
   `context.route` — Chrome injects the content script because the URL matches,
-  so the top-frame/sub-frame behaviour is testable without network. This is
+  so the top-frame/sub-frame behaviour is testable without network. The same
+  fixture decodes a PNG through `ImageDecoder`, and another through a detached
+  CORS `<img>` served from a routed cross-origin URL, into a `<canvas>` and
+  samples the composited pixels, covering `content/page.js`'s pre-correction
+  of both engine codecs and the
+  reload-on-theme-change policy (immediate, or deferred while a text field is
+  focused; the hidden-tab trigger itself cannot be reached in headless
+  Chromium). This is
   what `ci.yml` runs on every push and pull request, and it must stay green
   with no network access.
 - **Real-site smoke** (`npm run test:site`, i.e. `E2E_SITE=1 playwright test
